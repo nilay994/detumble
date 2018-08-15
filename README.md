@@ -13,4 +13,4 @@ Branches:
 5. Sensor fusion: tbd - understand quaternions, explore Kalman filter, sun sensor + magnetometer
 6. Magnetorquer: tbd - perform self test (maybe even the thruster with acc)
 
-![Earth's magnetic field with BMX055](https://github.com/nilay994/detumble/blob/master/earth_field_bias.png)
+![Earth's magnetic field with BMX055](https://github.com/nilay994/detumble/blob/master/earth_field_bias.PNG)
