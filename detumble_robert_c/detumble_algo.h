@@ -32,11 +32,12 @@
  *--------------------------------------------------+-----------------------+------------------------+-----------+---------+
  *
  **/
+#ifndef _DETUMBLE_ALGO_H
+#define _DETUMBLE_ALGO_H
 
-
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define LINE_BUFFER 500 // 200 char per line
 
@@ -54,12 +55,17 @@ typedef struct {
 	float z;
 } vector_t;
 
-
-vector_t step3_bias(float w1, vector_t b1_raw, vector_t b1_bias, float w2, vector_t b2_raw, vector_t b2_bias); 
+void step3_biasCalc(float w1, vector_t b1_raw, vector_t b1_bias, float w2, vector_t b2_raw, vector_t b2_bias, vector_t* b_cur, vector_t* b_cur_norm);
 void step4_bdotCalc(vector_t b_cur, vector_t b_cur_norm, vector_t b_prev, vector_t b_prev_norm, vector_t* b_dot, vector_t* b_dot_norm);
 vector_t step5_tumbleParam(vector_t b_dot);
-void step6_countUpdate(vector_t p_tumb);
-void step7_actuationDecision(int c_tumble, vector_t b_cur, vector_t b_dot_norm);
+int step6_countUpdate(vector_t p_tumb);
+void step7_actuationDecision(int c_tumble, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on);
 vector_t step8_controlCalc(vector_t b_cur, vector_t b_dot_norm);
-vector_t step9_torqueActuate(vector_t m_des, vector_t m_pol);
+void step9_torqueActuate(vector_t m_des, vector_t m_pol, vector_t* t_on, vector_t* s_on);
 float step10_hold();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -1,4 +1,6 @@
-
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 #include "detumble_algo.h"
 
 int8_t T1[3][3] = {1, 0, 0, 0, 1, 0, 0, 0, -1};
@@ -8,10 +10,10 @@ int8_t T2[3][3] = {1, 0, 0, 0, 1, 0, 0, 0, -1};
  * input:  weights, raw and bias values of each sensor
  * output: normalized and fused magnetic field readings.
 */
-vector_t step3_biasCalc(float w1, vector_t b1_raw, vector_t b1_bias, float w2, vector_t b2_raw, vector_t b2_bias)
+void step3_biasCalc(float w1, vector_t b1_raw, vector_t b1_bias, float w2, vector_t b2_raw, vector_t b2_bias, vector_t* b_cur, vector_t* b_cur_norm)
 {
 	//vector_t b1_cur; b2_cur; b1_bias; b2_bias; b1_raw; b2_raw, b_cur;
-	vector_t b1_cur, b2_cur, b_cur, b_cur_norm;
+	vector_t b1_cur, b2_cur;
 	/*equation 1a*/
 	b1_cur.x = T1[0][0]*b1_raw.x + T1[0][1]*b1_raw.y + T1[0][2]*b1_raw.z + b1_bias.x; 
 	b1_cur.y = T1[1][0]*b1_raw.x + T1[1][1]*b1_raw.y + T1[1][2]*b1_raw.z + b1_bias.y; 
@@ -23,16 +25,16 @@ vector_t step3_biasCalc(float w1, vector_t b1_raw, vector_t b1_bias, float w2, v
 	b2_cur.z = T2[2][0]*b2_raw.x + T2[2][1]*b2_raw.y + T2[2][2]*b2_raw.z + b2_bias.z; 
 
 	/*equation 2*/
-	b_cur.x = w1*b1_cur.x + w2*b2_cur.x;
-	b_cur.y = w1*b1_cur.y + w2*b2_cur.y;
-	b_cur.z = w1*b1_cur.z + w2*b2_cur.z;
+	b_cur->x = w1*b1_cur.x + w2*b2_cur.x;
+	b_cur->y = w1*b1_cur.y + w2*b2_cur.y;
+	b_cur->z = w1*b1_cur.z + w2*b2_cur.z;
 
-	float temp_norm = sqrt(b_cur.x*b_cur.x + b_cur.y*b_cur.y + b_cur.z*b_cur.z);
-	b_cur_norm.x = b_cur.x / temp_norm;
-	b_cur_norm.y = b_cur.y / temp_norm;
-	b_cur_norm.z = b_cur.z / temp_norm;
+	float temp_norm = sqrt(b_cur->x*b_cur->x + b_cur->y*b_cur->y + b_cur->z*b_cur->z);
+	b_cur_norm->x = b_cur->x / temp_norm;
+	b_cur_norm->y = b_cur->y / temp_norm;
+	b_cur_norm->z = b_cur->z / temp_norm;
 
-	return b_cur_norm;
+	//return b_cur_norm;
 }
 
 float Tc = 0.25; // 4 Hz, 250 ms
@@ -53,6 +55,7 @@ void step4_bdotCalc(vector_t b_cur, vector_t b_cur_norm, vector_t b_prev, vector
 		b_dot_norm->y = 0;
 		b_dot_norm->z = 0;
 		first_call = false;
+		printf("call1.......\n");
 	} 
 	// make sure Tc is 250 ms
 	else {
@@ -63,6 +66,7 @@ void step4_bdotCalc(vector_t b_cur, vector_t b_cur_norm, vector_t b_prev, vector
 		b_dot_norm->x = (b_cur_norm.x - b_prev_norm.x)/Tc;
 		b_dot_norm->y = (b_cur_norm.y - b_prev_norm.y)/Tc;
 		b_dot_norm->z = (b_cur_norm.z - b_prev_norm.z)/Tc;
+		printf("not call1.......\n");
 	}
 }
 
@@ -95,7 +99,7 @@ float p_bar = 0.000002;
  * input: p_tumb
  * output: c_tumble
  */
-void step6_countUpdate(vector_t p_tumb)
+int step6_countUpdate(vector_t p_tumb)
 {
 	static int c_tumble;
 	if (p_tumb.x <= p_bar && p_tumb.y <= p_bar && p_tumb.z <= p_bar) {
@@ -104,7 +108,7 @@ void step6_countUpdate(vector_t p_tumb)
 	else {
 		c_tumble = 0;
 	}
-
+	return c_tumble;
 }
 
 float t_conf = 3600;
@@ -114,13 +118,13 @@ vector_t m_pol = {1, 1, 1};
  * input: c_tumble
  * output: branch to another subroutine
  */
-void step7_actuationDecision(int c_tumble, vector_t b_cur, vector_t b_dot_norm)
+void step7_actuationDecision(int c_tumble, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on)
 {
 	vector_t m_des;
-	vector_t t_on;
+
 	if (c_tumble*Tc < t_conf) {
 		m_des = step8_controlCalc(b_cur, b_dot_norm);
-		t_on = step9_torqueActuate(m_des, m_pol);
+		step9_torqueActuate(m_des, m_pol, t_on, s_on);
 		// todo: actuate
 	}
 	else {
@@ -154,20 +158,18 @@ vector_t m_max = {0.002, 0.002, 0.002};
  * input: desired magnetic moment, polarity
  * output: t_on
  */
-vector_t step9_torqueActuate(vector_t m_des, vector_t m_pol)
+void step9_torqueActuate(vector_t m_des, vector_t m_pol, vector_t* t_on, vector_t* s_on)
 {
-	vector_t t_on;
-	vector_t s_on;
 	Ta = delta*Tc;
 	// magnitude
-	t_on.x = Ta * MIN(1, abs(m_des.x)/m_max.x);
-	t_on.y = Ta * MIN(1, abs(m_des.y)/m_max.y);
-	t_on.z = Ta * MIN(1, abs(m_des.z)/m_max.z);
+	t_on->x = Ta * MIN(1, abs(m_des.x)/m_max.x);
+	t_on->y = Ta * MIN(1, abs(m_des.y)/m_max.y);
+	t_on->z = Ta * MIN(1, abs(m_des.z)/m_max.z);
 
 	// direction
-	s_on.x = m_pol.x * SGN(m_des.x);
-	s_on.y = m_pol.y * SGN(m_des.y);
-	s_on.z = m_pol.z * SGN(m_des.z);
+	s_on->x = m_pol.x * SGN(m_des.x);
+	s_on->y = m_pol.y * SGN(m_des.y);
+	s_on->z = m_pol.z * SGN(m_des.z);
 
 	// TODO: add actuation signals
 }

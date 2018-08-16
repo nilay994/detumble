@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "detumble_algo.h"
+#include "detumble_algo.c"
 /*
 TODO: Make provision for online tuning of params: 
 maybe use python to update a settings file
@@ -67,12 +67,27 @@ void main(int argc, char *argv[])
 
 		vector_t b1_raw = mag1Data;
 		vector_t b2_raw = mag2Data;
+		int c_tumble;
 
-		vector_t fused;
+		vector_t b_cur, b_cur_norm, b_prev, b_prev_norm, b_dot, b_dot_norm, p_tumb;
+		vector_t m_des, t_on, s_on;
+		vector_t m_pol = {1,1,1};
 		// use the readings in the algo
-		fused = step3_biasCalc(0.5, b1_raw, b1_bias, 0.5, b2_raw, b2_bias);
+		step3_biasCalc(0.5, b1_raw, b1_bias, 0.5, b2_raw, b2_bias, &b_cur, &b_cur_norm);
+
+		step4_bdotCalc(b_cur, b_cur_norm, b_prev, b_prev_norm, &b_dot, &b_dot_norm);
+		b_prev = b_cur;
+		b_prev_norm = b_cur_norm;
+
+		p_tumb = step5_tumbleParam(b_dot);
+		c_tumble = step6_countUpdate(p_tumb);
+		step7_actuationDecision(c_tumble, b_cur, b_dot_norm, &t_on, &s_on);
+		printf("t_on: %f\t%f\t%f\n, s_on: %f\t%f\t%f\n", t_on.x, t_on.y, t_on.z, s_on.x, s_on.y, s_on.z);
+		//m_des = step8_controlCalc(b_cur, b_dot_norm);
 		column = 0;
-		printf("try: %f\n", mag1Data.x);
+
+
+		// printf("try: %f\n", mag1Data.x);
 
 	}
 	fclose(csv_input);
