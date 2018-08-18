@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "detumble_algo.c"
+#include <float.h>
+#include "detumble_algo.h"
 /*
 TODO: Make provision for online tuning of params: 
 maybe use python to update a settings file
-check accuracy of float/ undersaturating points
+check accuracy of double/ undersaturating points
 */
 
 
@@ -14,7 +15,7 @@ void main(int argc, char *argv[])
 {
 	if (argc < 2) {
 		printf("ERR: supply arguments correctly \n");
-		exit(0);
+		// exit(0);
 	}
 	else {
 		for (int i = 0; i <= argc; i++) {
@@ -22,28 +23,42 @@ void main(int argc, char *argv[])
 		}
 	}
 	FILE *csv_input;
-	char buf[LINE_BUFFER];
-	csv_input = fopen(argv[1], "r");
+	FILE *csv_output;
+	char buf[LINE_BUFFER] = { 0 };
+	//csv_input = fopen(argv[1], "r");
+	csv_input = fopen("data4test_01.csv", "r");
+	if (csv_input == NULL) {
+		printf("failed to open input csv\n");
+	}
+
+	csv_output = fopen("data4test_Out.csv", "w");
+	if (csv_output == NULL) {
+		printf("failed to open output csv\n");
+	}
+
 	int row = 2;
 	char *token = 0;
 	int column = 0;
 	vector_t mag1Data;
 	vector_t mag2Data;
 
-	vector_t b1_bias = {0,0,0};
-	vector_t b2_bias = {0,0,0};
-	float parse_row[15];
-
+	double parse_row[15];
 
 	// TODO: strcpy can populate array from strings mostly.
 
 	// strip the header
 	fgets(buf, sizeof(buf), csv_input); 
 
+	// print header yourself
+	//printf("\033[1;31m\n");
+
+	//printf("mag1.x\t\tmag1.y\t\tmag1.z\t\tmag2.x\t\tmag2.y\t\tmag2.z\t\tt_on.x\t\tt_on.y\t\tt_on.z\t\ts_on.x\t\ts_on.y\t\ts_on.z\t\tp_tumb.x\t\tp_tumb.y\t\tp_tumb.z\n");
+	fprintf(csv_output, "mag1.x,mag1.y,mag1.z,mag2.x,mag2.y,mag2.z,t_on.x,t_on.y,t_on.z,s_on.x,s_on.y,s_on.z,p_tumb.x,p_tumb.y,p_tumb.z\n");
+	//printf("\033[0m\n");
 	// read from row 2
 	while (fgets(buf, sizeof(buf), csv_input)) {
-		printf("row %d: ", row ++);
-
+		// printf("row %d: ", row ++);
+		row ++;
 		// initialize buffer for each line and split the string by ","
 		token = strtok(buf, ",");
 
@@ -52,38 +67,25 @@ void main(int argc, char *argv[])
 		while(token) {
 
 			parse_row[column] = atof(token);
-			printf("%f\t", parse_row[column]);
+			// printf("%f\t", parse_row[column]);
 
 			token = strtok(NULL, ",");  // reset the static pointer
 			column ++;
 
 		}
+		
 		mag1Data.x = parse_row[0];
 		mag1Data.y = parse_row[1];
 		mag1Data.z = parse_row[2];
 		mag2Data.x = parse_row[3];
 		mag2Data.y = parse_row[4];
 		mag2Data.z = parse_row[5];
-
-		vector_t b1_raw = mag1Data;
-		vector_t b2_raw = mag2Data;
-		int c_tumble;
-
-		vector_t b_cur, b_cur_norm, b_prev, b_prev_norm, b_dot, b_dot_norm, p_tumb;
-		vector_t m_des, t_on, s_on;
-		vector_t m_pol = {1,1,1};
-		// use the readings in the algo
-		step3_biasCalc(0.5, b1_raw, b1_bias, 0.5, b2_raw, b2_bias, &b_cur, &b_cur_norm);
-
-		step4_bdotCalc(b_cur, b_cur_norm, b_prev, b_prev_norm, &b_dot, &b_dot_norm);
-		b_prev = b_cur;
-		b_prev_norm = b_cur_norm;
-
-		p_tumb = step5_tumbleParam(b_dot);
-		c_tumble = step6_countUpdate(p_tumb);
-		step7_actuationDecision(c_tumble, b_cur, b_dot_norm, &t_on, &s_on);
-		printf("t_on: %f\t%f\t%f\n, s_on: %f\t%f\t%f\n", t_on.x, t_on.y, t_on.z, s_on.x, s_on.y, s_on.z);
-		//m_des = step8_controlCalc(b_cur, b_dot_norm);
+		vector_t s_on;
+		vector_t t_on;
+		vector_t p_tumb;
+		controlLoop(mag1Data, mag2Data, &s_on, &t_on, &p_tumb);
+		fprintf(csv_output, "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",
+			mag1Data.x, mag1Data.y, mag1Data.z, mag2Data.x, mag2Data.y, mag2Data.z, t_on.x, t_on.y, t_on.z, s_on.x, s_on.y, s_on.z, p_tumb.x, p_tumb.y, p_tumb.z);
 		column = 0;
 
 
@@ -91,6 +93,8 @@ void main(int argc, char *argv[])
 
 	}
 	fclose(csv_input);
+	fclose(csv_output);
+	getch();
 }
 
 
