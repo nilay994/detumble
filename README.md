@@ -9,7 +9,7 @@ Branches to be diverged in future:
 1. Accelerometer: tbd - filters cutoff
 2. Gyroscope: tbd - 
 3. Magnetometer: IN PROGRESS: scroll below for status
-4. Detumbling: IN PROGRESS: navigate [here](https://github.com/nilay994/detumble/tree/master/detumble_robert_c)
+4. Detumbling: IN PROGRESS: navigate [here](https://github.com/nilay994/detumble/tree/master/detumble_bdot)
 5. Sensor fusion: tbd - understand quaternions, explore Kalman filter, sun sensor + magnetometer
 6. Magnetorquer: tbd - perform self test closed loop (maybe even the thruster with acc)
 
@@ -23,8 +23,9 @@ Interfaced BMX-055's magnetometer successfully with the MSP432:
 - Bias compensation done with Android's "draw a figure 8 method". i.e. bias = (min + max)/2
 - One of the results illustrated below
  
-Earth's magnetic field with BMX055
-![Earth's magnetic field with BMX055](https://github.com/nilay994/detumble/blob/master/earth_field_bias.PNG)
+Earth's magnetic field with BMX055, Soft and Hard Iron errors visible in plots below (ref: https://www.vectornav.com/support/library/magnetometer)
+
+![iron_error](https://github.com/nilay994/detumble/blob/master/iron_calib.PNG)
 
 Muddy parts (not so sure - will reveal vulnerabilities in test)
 

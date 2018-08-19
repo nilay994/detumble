@@ -16,6 +16,6 @@
 - suspecting my macros are making sign errors, s_on and t_on don't match with robert
 - plots attached below, matlab script committed.
 
-![Tumbling parameter plots](https://github.com/nilay994/detumble/blob/master/detumble_robert_c/cmp1.jpg)
-![Magnetorquers sign plots](https://github.com/nilay994/detumble/blob/master/detumble_robert_c/cmp2.jpg)
-![Magnetorquers time plots](https://github.com/nilay994/detumble/blob/master/detumble_robert_c/cmp3.jpg)
+![Tumbling parameter plots](https://github.com/nilay994/detumble/blob/master/detumble_bdot/cmp1.jpg)
+![Magnetorquers sign plots](https://github.com/nilay994/detumble/blob/master/detumble_bdot/cmp2.jpg)
+![Magnetorquers time plots](https://github.com/nilay994/detumble/blob/master/detumble_bdot/cmp3.jpg)
