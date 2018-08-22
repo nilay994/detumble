@@ -26,12 +26,12 @@ void main(int argc, char *argv[])
 	FILE *csv_output;
 	char buf[LINE_BUFFER] = { 0 };
 	//csv_input = fopen(argv[1], "r");
-	csv_input = fopen("data4test_01.csv", "r");
+	csv_input = fopen("data4test_02_in.csv", "r");
 	if (csv_input == NULL) {
 		printf("failed to open input csv\n");
 	}
 
-	csv_output = fopen("data4test_Out.csv", "w");
+	csv_output = fopen("data4test_02_out.csv", "w");
 	if (csv_output == NULL) {
 		printf("failed to open output csv\n");
 	}

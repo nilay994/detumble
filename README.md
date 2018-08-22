@@ -20,8 +20,8 @@ Interfaced BMX-055's magnetometer successfully with the MSP432:
 - factory trim read from flash and used in calibration
 - temperature compensation for magnetometer fused with the readings (Outer Space doesn't comply, if Bosch provides temperature scaling, might as well use it)
 - random and long expressions from Bosch's sensortec library implemented for magnetometer
-- Bias compensation done with Android's "draw a figure 8 method". i.e. bias = (min + max)/2
-- One of the results illustrated below
+- bias compensation done with Android's "draw a figure 8 method". i.e. bias = (min + max)/2
+- one of the results illustrated below
  
 Earth's magnetic field with BMX055, Soft and Hard Iron errors visible in plots below (ref: https://www.vectornav.com/support/library/magnetometer)
 

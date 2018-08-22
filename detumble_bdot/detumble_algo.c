@@ -81,69 +81,84 @@ double alpha = 0.01;
  * input: alpha, p_tumb, b_dot
  * output: tumble parameter
  */
-vector_t step5_tumbleParam(vector_t b_dot) 
+vector_t step5_tumbleParam(vector_t b_dot_norm) 
 {
-	// TODO: check if it works, the static part
-	static vector_t p_tumb = {0.00001, 0.00001, 0.00001};
+	// verify on MSP432: check if it works, the static implemenation
+	static vector_t p_tumb = {2,2,2};
 	static vector_t b_dot_old = {0,0,0};
 	
-	if (b_dot_old.x != b_dot.x || b_dot_old.y != b_dot.y || b_dot_old.z != b_dot.z) {
-		p_tumb.x = alpha* fabs(b_dot.x) + (1-alpha)*p_tumb.x;
-		p_tumb.y = alpha* fabs(b_dot.y) + (1-alpha)*p_tumb.y;
-		p_tumb.z = alpha* fabs(b_dot.z) + (1-alpha)*p_tumb.z;
+	if (b_dot_old.x != b_dot_norm.x || b_dot_old.y != b_dot_norm.y || b_dot_old.z != b_dot_norm.z) {
+		p_tumb.x = alpha* fabs(b_dot_norm.x) + (1-alpha)*p_tumb.x;
+		p_tumb.y = alpha* fabs(b_dot_norm.y) + (1-alpha)*p_tumb.y;
+		p_tumb.z = alpha* fabs(b_dot_norm.z) + (1-alpha)*p_tumb.z;
 	}
 	// make sure it doesn't matter if the below statement is inside/outside the above if loop
-	b_dot_old = b_dot;
+	b_dot_old = b_dot_norm;
 
 	return p_tumb;
 }
 
-double p_bar = 0.000002;
+double detumble_p_bar_upp = 0.085;
+double detumble_p_bar_low = 0.075;
 /*
  * Description: performs step6 of the detumbling algorithm - counter update
  * input: p_tumb
  * output: c_tumble
  */
-int step6_countUpdate(vector_t p_tumb)
+void step6_countUpdate(vector_t p_tumb, int* detumble_count_detumb, int* detumble_count_tumb)
 {
-	static int c_tumble = 0;
-	if (p_tumb.x <= p_bar && p_tumb.y <= p_bar && p_tumb.z <= p_bar) {
-		c_tumble = c_tumble + 1;
+	// static int detumble_count_detumb = 0;
+	// static int detumble_count_tumb = 0;
+
+	if (p_tumb.x <= detumble_p_bar_low && p_tumb.y <= detumble_p_bar_low && p_tumb.z <= detumble_p_bar_low) {
+		*detumble_count_detumb = *detumble_count_detumb + 1;
 	}
 	else {
-		c_tumble = 0;
+		*detumble_count_detumb = 0;
 	}
-	return c_tumble;
+
+	if (p_tumb.x >= detumble_p_bar_upp || p_tumb.y >= detumble_p_bar_upp || p_tumb.z >= detumble_p_bar_upp) {
+		*detumble_count_tumb = *detumble_count_tumb + 1;
+	}
+	else {
+		*detumble_count_tumb = 0;
+	}
 }
 
-double t_conf = 3600;
-vector_t m_pol = {1, 1, 1};
+double t_conf_tumb = 120;
+double t_conf_detumb = 3600;
 /*
  * Description: performs step7 of the detumbling algorithm - decision to actuate
- * input: c_tumble
- * output: branch to another subroutine
+ * input: c_tumble, c_detumble
+ * output: returns bool chi_tumb
  */
-void step7_actuationDecision(int c_tumble, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on)
+int step7_assessRotation(int c_detumb, int c_tumb) //, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on)
 {
-	vector_t m_des;
-
-	if (c_tumble*Tc < t_conf) {
+	int chi_tumb;
+	if (c_tumb*Tc >= t_conf_tumb) {
+		chi_tumb = 1;
+		/*
 		m_des = step8_controlCalc(b_cur, b_dot_norm);
 		step9_torqueActuate(m_des, m_pol, t_on, s_on);
 		// todo: actuate
+		*/
 	}
-	else {
-		step10_hold();
+	if (c_detumb*Tc >= t_conf_detumb) {
+		chi_tumb = 0;
+		//step10_hold();
 	}
 }
 
-double k_w = 0.000001422;
+// TODO: Step8 to be implemented on OBC
+
+
+double k_w = 1.2073917;
 /*
  * Description: performs step8 of the detumbling algorithm - how much to actuate
  * input: k_w, b_cur, d_dot_norm
  * output: desired magnetic moment
  */
-vector_t step8_controlCalc(vector_t b_cur, vector_t b_dot_norm)
+vector_t step9_controlCalc(vector_t b_cur, vector_t b_dot_norm)
 {
 	vector_t m_des;
 	double temp_norm = sqrt(b_cur.x*b_cur.x + b_cur.y*b_cur.y + b_cur.z*b_cur.z);
@@ -157,12 +172,13 @@ double delta = 0.6;
 double Ta;
 
 vector_t m_max = {0.002, 0.002, 0.002};
+vector_t m_pol = { 1, 1, 1 };
 /*
  * Description: performs step9 of the detumbling algorithm - actually actuate
  * input: desired magnetic moment, polarity
  * output: t_on
  */
-void step9_torqueActuate(vector_t m_des, vector_t m_pol, vector_t* t_on, vector_t* s_on)
+void step10_torqueActuate(vector_t m_des, vector_t m_pol, vector_t* t_on, vector_t* s_on)
 {
 	Ta = delta*Tc;
 
@@ -195,7 +211,7 @@ double Ts = 0.02;
  * input: control, hold and actuation time
  * output: stop processor in the meantime
  */
-double step10_hold()
+double step11_hold()
 {
 	// delay(Ta+Tc+Ts);
 }
@@ -207,8 +223,9 @@ void controlLoop(vector_t b1_raw, vector_t b2_raw, vector_t* s_on, vector_t* t_o
 		static vector_t b_prev = { 0,0,0 };
 		static vector_t b_prev_norm = { 0,0,0 };
 		vector_t m_des = { 0,0,0 };
-		vector_t m_pol = {1,1,1};
-		int c_tumble = 0;
+		vector_t m_pol = { 1,1,1 };
+		static int c_tumb = 0;
+		static int c_detumb = 0;
 
 		// use the readings in the algo
 		step3_biasCalc(0.5, b1_raw, b1_bias, 0.5, b2_raw, b2_bias, &b_cur, &b_cur_norm);
@@ -218,9 +235,17 @@ void controlLoop(vector_t b1_raw, vector_t b2_raw, vector_t* s_on, vector_t* t_o
 		b_prev_norm = b_cur_norm;
 
 		*p_tumb = step5_tumbleParam(b_dot);
-		c_tumble = step6_countUpdate(*p_tumb);
+		step6_countUpdate(*p_tumb, &c_detumb, &c_tumb);
 
-		step7_actuationDecision(c_tumble, b_cur, b_dot_norm, t_on, s_on);
+		if (step7_assessRotation(c_detumb, c_tumb) > 0) {
+			m_des = step9_controlCalc(b_cur, b_dot_norm);
+			step10_torqueActuate(m_des, m_pol, t_on, s_on);
+			step11_hold();
+		}// , b_dot_norm, t_on, s_on);
+		else {
+			step11_hold();
+		}
+		// TODO: Step8, actuation									   
 		//printf("%.10f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n",
 		//	b1_raw.x, b1_raw.y, b1_raw.z, b2_raw.x, b2_raw.y, b2_raw.z, t_on->x, t_on->y, t_on->z, s_on->x, s_on->y, s_on->z, p_tumb->x, p_tumb->y, p_tumb->z);
 }

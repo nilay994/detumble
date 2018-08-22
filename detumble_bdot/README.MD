@@ -1,11 +1,12 @@
-# Implementing detumble algorithm v0.2 on C
+# Implementing detumble algorithm v0.3 on C
  - intended to be compiled on GCC 6.4.0 
  - uses Visual Studio 2017 for debugging. Will switch to gcc and gdb soon.
  - todo's mentioned in source
 
-## not working at the moment
+## not working at the moment (nothing works perfectly atm)
 - t_on
 - s_on
+- tumbling parameter
 - MSP432 implementation feasibility not checked yet
 
 
