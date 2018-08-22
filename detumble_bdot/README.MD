@@ -3,10 +3,10 @@
  - uses Visual Studio 2017 for debugging. Will switch to gcc and gdb soon.
  - todo's mentioned in source
 
-## not working at the moment (nothing works perfectly atm)
+## plots not exactly matching yet
 - t_on
 - s_on
-- tumbling parameter
+- ~~tumbling parameter~~
 - MSP432 implementation feasibility not checked yet
 
 
