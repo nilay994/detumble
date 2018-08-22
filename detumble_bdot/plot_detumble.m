@@ -1,6 +1,7 @@
 %% plot detumble parameter for verifying the C and matlab detumble algorithms
-readMatrix_n = csvread('data4test_Out.csv', 1, 0);
-readMatrix_r = csvread('data4test_01.csv', 1, 0);
+
+readMatrix_r = csvread('data4test_02_in.csv', 1, 0);
+readMatrix_n = csvread('data4test_02_out.csv', 1, 0);
 
 plot_save1 = figure(1);
 subplot(2,1,1);
@@ -14,9 +15,10 @@ plot(readMatrix_n(:,13)); hold on; plot(readMatrix_n(:,14)); plot(readMatrix_n(:
 title('Nilays algorithm');
 xlabel('time/sample');
 ylabel('p_{tumb}');
+saveas(plot_save1,'cmp1','jpg');
 
 %%
-plot_save1 = figure(2);
+plot_save2 = figure(2);
 subplot(3,2,1);
 plot(readMatrix_r(:,10)); grid on;
 title('Roberts algorithm');
@@ -36,9 +38,10 @@ subplot(3,2,4);
 plot(readMatrix_n(:,11)); grid on;
 subplot(3,2,6);
 plot(readMatrix_n(:,12)); grid on;
+saveas(plot_save2,'cmp2','jpg');
 
 %% 
-plot_save2 = figure(3);
+plot_save3 = figure(3);
 subplot(3,2,1);
 plot(readMatrix_r(:,7)); grid on;
 title('Roberts algorithm');
@@ -58,3 +61,5 @@ subplot(3,2,4);
 plot(readMatrix_n(:,8)); grid on;
 subplot(3,2,6);
 plot(readMatrix_n(:,9)); grid on;
+
+saveas(plot_save3,'cmp3','jpg');

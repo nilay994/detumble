@@ -84,7 +84,7 @@ double alpha = 0.01;
 vector_t step5_tumbleParam(vector_t b_dot_norm) 
 {
 	// verify on MSP432: check if it works, the static implemenation
-	static vector_t p_tumb = {2,2,2};
+	static vector_t p_tumb = {1.98,1.98,1.98};
 	static vector_t b_dot_old = {0,0,0};
 	
 	if (b_dot_old.x != b_dot_norm.x || b_dot_old.y != b_dot_norm.y || b_dot_old.z != b_dot_norm.z) {
@@ -105,19 +105,19 @@ double detumble_p_bar_low = 0.075;
  * input: p_tumb
  * output: c_tumble
  */
-void step6_countUpdate(vector_t p_tumb, int* detumble_count_detumb, int* detumble_count_tumb)
+void step6_countUpdate(vector_t b_dot_norm, int* detumble_count_detumb, int* detumble_count_tumb)
 {
 	// static int detumble_count_detumb = 0;
 	// static int detumble_count_tumb = 0;
 
-	if (p_tumb.x <= detumble_p_bar_low && p_tumb.y <= detumble_p_bar_low && p_tumb.z <= detumble_p_bar_low) {
+	if (b_dot_norm.x <= detumble_p_bar_low && b_dot_norm.y <= detumble_p_bar_low && b_dot_norm.z <= detumble_p_bar_low) {
 		*detumble_count_detumb = *detumble_count_detumb + 1;
 	}
 	else {
 		*detumble_count_detumb = 0;
 	}
 
-	if (p_tumb.x >= detumble_p_bar_upp || p_tumb.y >= detumble_p_bar_upp || p_tumb.z >= detumble_p_bar_upp) {
+	if (b_dot_norm.x >= detumble_p_bar_upp || b_dot_norm.y >= detumble_p_bar_upp || b_dot_norm.z >= detumble_p_bar_upp) {
 		*detumble_count_tumb = *detumble_count_tumb + 1;
 	}
 	else {
@@ -134,7 +134,7 @@ double t_conf_detumb = 3600;
  */
 int step7_assessRotation(int c_detumb, int c_tumb) //, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on)
 {
-	int chi_tumb;
+	int chi_tumb = 0;
 	if (c_tumb*Tc >= t_conf_tumb) {
 		chi_tumb = 1;
 		/*
@@ -147,6 +147,7 @@ int step7_assessRotation(int c_detumb, int c_tumb) //, vector_t b_cur, vector_t 
 		chi_tumb = 0;
 		//step10_hold();
 	}
+	return chi_tumb;
 }
 
 // TODO: Step8 to be implemented on OBC
@@ -227,6 +228,14 @@ void controlLoop(vector_t b1_raw, vector_t b2_raw, vector_t* s_on, vector_t* t_o
 		static int c_tumb = 0;
 		static int c_detumb = 0;
 
+		// since old values are not used, might as well clear them to avoid garbage when actuation period is zero
+		t_on->x = 0;
+		t_on->y = 0;
+		t_on->z = 0;
+		s_on->x = 0;
+		s_on->y = 0;
+		s_on->z = 0;
+
 		// use the readings in the algo
 		step3_biasCalc(0.5, b1_raw, b1_bias, 0.5, b2_raw, b2_bias, &b_cur, &b_cur_norm);
 
@@ -234,7 +243,7 @@ void controlLoop(vector_t b1_raw, vector_t b2_raw, vector_t* s_on, vector_t* t_o
 		b_prev = b_cur;
 		b_prev_norm = b_cur_norm;
 
-		*p_tumb = step5_tumbleParam(b_dot);
+		*p_tumb = step5_tumbleParam(b_dot_norm);
 		step6_countUpdate(*p_tumb, &c_detumb, &c_tumb);
 
 		if (step7_assessRotation(c_detumb, c_tumb) > 0) {
