@@ -1,7 +1,7 @@
 clear; clc;
  
 %User Defined Properties 
-serialPort = 'COM3';           % define COM port #
+serialPort = 'COM9';           % define COM port #
 plotTitle = 'PocketCube-MAG';  % plot title
 plotGrid = 'on';               % 'off' to turn off grid
 min = -10000;                  % set y-min
@@ -54,7 +54,7 @@ set(plot5, 'XLim', [-35 35], 'YLim', [-35 35]);
 s = serial(serialPort, 'baudrate', 115200)
 disp('Close Plot to End Session');
 fopen(s);
- 
+
 tic
 %%
 while ishandle(plotGraph1) %Loop when Plot is Active 

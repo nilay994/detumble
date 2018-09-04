@@ -80,21 +80,23 @@ double alpha = 0.01;
  * Description: performs step5 of the detumbling algorithm - tumble parameter update
  * input: alpha, p_tumb, b_dot
  * output: tumble parameter
+ * TODO: generally new b_dot_norm is always available, and pass it through the filter only 
+ * after successful i2c communication in the current iteration
  */
 vector_t step5_tumbleParam(vector_t b_dot_norm) 
 {
-	// verify on MSP432: check if it works, the static implemenation
-	static vector_t p_tumb = {1.98,1.98,1.98};
-	static vector_t b_dot_old = {0,0,0};
+	// TODO: verify on MSP432: check if it works, the static implemenation
+	static vector_t p_tumb    = {2,2,2};
+	// static vector_t b_dot_old = {0,0,0};
 	
-	if (b_dot_old.x != b_dot_norm.x || b_dot_old.y != b_dot_norm.y || b_dot_old.z != b_dot_norm.z) {
-		p_tumb.x = alpha* fabs(b_dot_norm.x) + (1-alpha)*p_tumb.x;
-		p_tumb.y = alpha* fabs(b_dot_norm.y) + (1-alpha)*p_tumb.y;
-		p_tumb.z = alpha* fabs(b_dot_norm.z) + (1-alpha)*p_tumb.z;
-	}
+	// if (b_dot_old.x != b_dot_norm.x || b_dot_old.y != b_dot_norm.y || b_dot_old.z != b_dot_norm.z) {
+	p_tumb.x = alpha* fabs(b_dot_norm.x) + (1-alpha)*p_tumb.x;
+	p_tumb.y = alpha* fabs(b_dot_norm.y) + (1-alpha)*p_tumb.y;
+	p_tumb.z = alpha* fabs(b_dot_norm.z) + (1-alpha)*p_tumb.z;
+	//}
 	// make sure it doesn't matter if the below statement is inside/outside the above if loop
-	b_dot_old = b_dot_norm;
-
+	//b_dot_old = b_dot_norm;
+	
 	return p_tumb;
 }
 
@@ -104,8 +106,9 @@ double detumble_p_bar_low = 0.075;
  * Description: performs step6 of the detumbling algorithm - counter update
  * input: p_tumb
  * output: c_tumble
+ * Make sure the counter is unsigned int, unclear overflow errors upon saturation
  */
-void step6_countUpdate(vector_t b_dot_norm, int* detumble_count_detumb, int* detumble_count_tumb)
+void step6_countUpdate(vector_t b_dot_norm, unsigned int* detumble_count_detumb, unsigned int* detumble_count_tumb)
 {
 	// static int detumble_count_detumb = 0;
 	// static int detumble_count_tumb = 0;
@@ -134,7 +137,9 @@ double t_conf_detumb = 3600;
  */
 int step7_assessRotation(int c_detumb, int c_tumb) //, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on)
 {
-	int chi_tumb = 0;
+	// TODO: shouldn't ideally be static, verify what happens when no IF loop is taken
+	static int chi_tumb = 0;
+	// Verify IF loop multiplication overflows signed?!
 	if (c_tumb*Tc >= t_conf_tumb) {
 		chi_tumb = 1;
 		/*
@@ -191,8 +196,7 @@ void step10_torqueActuate(vector_t m_des, vector_t m_pol, vector_t* t_on, vector
 	var.x = var.x / m_max.x;
 	var.y = var.y / m_max.y;
 	var.z = var.z / m_max.z;
-
-
+	
 	// magnitude
 	t_on->x = Ta * MIN(1, var.x);
 	t_on->y = Ta * MIN(1, var.y);
@@ -202,7 +206,6 @@ void step10_torqueActuate(vector_t m_des, vector_t m_pol, vector_t* t_on, vector
 	s_on->x = m_pol.x * SGN(m_des.x);
 	s_on->y = m_pol.y * SGN(m_des.y);
 	s_on->z = m_pol.z * SGN(m_des.z);
-
 	// TODO: add actuation signals
 }
 
@@ -225,8 +228,8 @@ void controlLoop(vector_t b1_raw, vector_t b2_raw, vector_t* s_on, vector_t* t_o
 		static vector_t b_prev_norm = { 0,0,0 };
 		vector_t m_des = { 0,0,0 };
 		vector_t m_pol = { 1,1,1 };
-		static int c_tumb = 0;
-		static int c_detumb = 0;
+		static unsigned int c_tumb = 0;
+		static unsigned int c_detumb = 0;
 
 		// since old values are not used, might as well clear them to avoid garbage when actuation period is zero
 		t_on->x = 0;
