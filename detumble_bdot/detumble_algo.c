@@ -87,15 +87,11 @@ vector_t step5_tumbleParam(vector_t b_dot_norm)
 {
 	// TODO: verify on MSP432: check if it works, the static implemenation
 	static vector_t p_tumb    = {2,2,2};
-	// static vector_t b_dot_old = {0,0,0};
 	
 	// if (b_dot_old.x != b_dot_norm.x || b_dot_old.y != b_dot_norm.y || b_dot_old.z != b_dot_norm.z) {
 	p_tumb.x = alpha* fabs(b_dot_norm.x) + (1-alpha)*p_tumb.x;
 	p_tumb.y = alpha* fabs(b_dot_norm.y) + (1-alpha)*p_tumb.y;
 	p_tumb.z = alpha* fabs(b_dot_norm.z) + (1-alpha)*p_tumb.z;
-	//}
-	// make sure it doesn't matter if the below statement is inside/outside the above if loop
-	//b_dot_old = b_dot_norm;
 	
 	return p_tumb;
 }
@@ -108,23 +104,29 @@ double detumble_p_bar_low = 0.075;
  * output: c_tumble
  * Make sure the counter is unsigned int, unclear overflow errors upon saturation
  */
-void step6_countUpdate(vector_t b_dot_norm, unsigned int* detumble_count_detumb, unsigned int* detumble_count_tumb)
+void step6_countUpdate(vector_t b_dot_norm, unsigned int* c_tumb, unsigned int* c_detumb)
 {
 	// static int detumble_count_detumb = 0;
 	// static int detumble_count_tumb = 0;
 
 	if (b_dot_norm.x <= detumble_p_bar_low && b_dot_norm.y <= detumble_p_bar_low && b_dot_norm.z <= detumble_p_bar_low) {
-		*detumble_count_detumb = *detumble_count_detumb + 1;
+		// saturate timer, avoid overflows
+		if (*c_detumb < 65535) {
+			*c_detumb = *c_detumb + 1;
+		}
 	}
 	else {
-		*detumble_count_detumb = 0;
+		*c_detumb = 0;
 	}
 
 	if (b_dot_norm.x >= detumble_p_bar_upp || b_dot_norm.y >= detumble_p_bar_upp || b_dot_norm.z >= detumble_p_bar_upp) {
-		*detumble_count_tumb = *detumble_count_tumb + 1;
+		// saturate timer, avoid overflows
+		if (*c_tumb < 65535) {
+			*c_tumb = *c_tumb + 1;
+		}
 	}
 	else {
-		*detumble_count_tumb = 0;
+		*c_tumb = 0;
 	}
 }
 
@@ -135,22 +137,16 @@ double t_conf_detumb = 3600;
  * input: c_tumble, c_detumble
  * output: returns bool chi_tumb
  */
-int step7_assessRotation(int c_detumb, int c_tumb) //, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on)
+int step7_assessRotation(unsigned int* c_tumb, unsigned int* c_detumb) //, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on)
 {
-	// TODO: shouldn't ideally be static, verify what happens when no IF loop is taken
+	// NB: Should be static!!
 	static int chi_tumb = 0;
 	// Verify IF loop multiplication overflows signed?!
-	if (c_tumb*Tc >= t_conf_tumb) {
+	if (*c_tumb * Tc >= t_conf_tumb) {
 		chi_tumb = 1;
-		/*
-		m_des = step8_controlCalc(b_cur, b_dot_norm);
-		step9_torqueActuate(m_des, m_pol, t_on, s_on);
-		// todo: actuate
-		*/
 	}
-	if (c_detumb*Tc >= t_conf_detumb) {
+	if (*c_detumb * Tc >= t_conf_detumb) {
 		chi_tumb = 0;
-		//step10_hold();
 	}
 	return chi_tumb;
 }
@@ -221,15 +217,17 @@ double step11_hold()
 }
 
 
-void controlLoop(vector_t b1_raw, vector_t b2_raw, vector_t* s_on, vector_t* t_on, vector_t* p_tumb)
+void controlLoop(vector_t b1_raw, vector_t b2_raw, 
+				 vector_t* s_on, vector_t* t_on, vector_t* p_tumb, 
+				 unsigned int* c_tumb, unsigned int* c_detumb)
 {
 		vector_t b_cur, b_cur_norm, b_dot, b_dot_norm;
 		static vector_t b_prev = { 0,0,0 };
 		static vector_t b_prev_norm = { 0,0,0 };
 		vector_t m_des = { 0,0,0 };
 		vector_t m_pol = { 1,1,1 };
-		static unsigned int c_tumb = 0;
-		static unsigned int c_detumb = 0;
+		// static unsigned int c_tumb = 0;
+		// static unsigned int c_detumb = 0;
 
 		// since old values are not used, might as well clear them to avoid garbage when actuation period is zero
 		t_on->x = 0;
@@ -247,9 +245,9 @@ void controlLoop(vector_t b1_raw, vector_t b2_raw, vector_t* s_on, vector_t* t_o
 		b_prev_norm = b_cur_norm;
 
 		*p_tumb = step5_tumbleParam(b_dot_norm);
-		step6_countUpdate(*p_tumb, &c_detumb, &c_tumb);
+		step6_countUpdate(*p_tumb, c_tumb, c_detumb);
 
-		if (step7_assessRotation(c_detumb, c_tumb) > 0) {
+		if (step7_assessRotation(c_tumb, c_detumb) > 0) {
 			m_des = step9_controlCalc(b_cur, b_dot_norm);
 			step10_torqueActuate(m_des, m_pol, t_on, s_on);
 			step11_hold();

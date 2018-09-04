@@ -1,7 +1,7 @@
 %% plot detumble parameter for verifying the C and matlab detumble algorithms
 
-readMatrix_r = csvread('data4test_02_in.csv', 1, 0);
-readMatrix_n = csvread('data4test_02_out.csv', 1, 0);
+readMatrix_r = csvread('data4test_03_in.csv', 1, 0);
+readMatrix_n = csvread('data4test_03_out.csv', 1, 0);
 
 plot_save1 = figure(1);
 pu1 = subplot(2,1,1);
@@ -69,3 +69,21 @@ plot(readMatrix_n(:,9)); grid on;
 linkaxes([pt1,pt2,pt3,pt4,pt5,pt6],'xy');
 
 saveas(plot_save3,'cmp3','jpg');
+
+%%
+plot_save4 = figure(4);
+
+pv1 = subplot(2,2,1);
+plot(readMatrix_r(:,16)); grid on;
+title('Roberts c_{tumb}');
+pv3 = subplot(2,2,3);
+plot(readMatrix_r(:,17)); grid on;
+title('Roberts c_{detumb}');
+pv2 = subplot(2,2,2);
+plot(readMatrix_n(:,16)); grid on;
+title('Nilays c_{tumb}');
+pv4 = subplot(2,2,4);
+plot(readMatrix_n(:,17)); grid on;
+linkaxes([pv1,pv2,pv3,pv4], 'xy');
+title('Nilays c_{detumb}');
+saveas(plot_save4,'cmp4','jpg');

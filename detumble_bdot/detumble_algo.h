@@ -61,14 +61,16 @@ typedef struct {
 void step3_biasCalc(double w1, vector_t b1_raw, vector_t b1_bias, double w2, vector_t b2_raw, vector_t b2_bias, vector_t* b_cur, vector_t* b_cur_norm);
 void step4_bdotCalc(vector_t b_cur, vector_t b_cur_norm, vector_t b_prev, vector_t b_prev_norm, vector_t* b_dot, vector_t* b_dot_norm);
 vector_t step5_tumbleParam(vector_t b_dot);
-void step6_countUpdate(vector_t p_tumb, int* detumble_count_detumb, int* detumble_count_tumb);
-int step7_assessRotation(int c_tumble, int c_detumb);//, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on);
+void step6_countUpdate(vector_t p_tumb, unsigned int* c_tumb, unsigned int* c_detumb);
+int step7_assessRotation(unsigned int* c_tumb, unsigned int* c_detumb);//, vector_t b_cur, vector_t b_dot_norm, vector_t* t_on, vector_t* s_on);
 // TODO: Step8 to be implemented on OBC
 vector_t step9_controlCalc(vector_t b_cur, vector_t b_dot_norm);
 void step10_torqueActuate(vector_t m_des, vector_t m_pol, vector_t* t_on, vector_t* s_on);
 double step11_hold();
 
-void controlLoop(vector_t b1_raw, vector_t b2_raw, vector_t* s_on, vector_t* t_on, vector_t* p_tumb);
+void controlLoop(vector_t b1_raw, vector_t b2_raw, 
+				 vector_t* s_on, vector_t* t_on, vector_t* p_tumb, 
+				 unsigned int* c_tumb, unsigned int* c_detumb);
 
 #ifdef __cplusplus
 }
