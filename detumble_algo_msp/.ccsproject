@@ -15,5 +15,5 @@
 	<templateProperties value="id=i2ctmp007_MSP_EXP432P401R_tirtos_ccs.projectspec.i2ctmp007_MSP_EXP432P401R_tirtos_ccs,buildProfile=release,isHybrid=true"/>
 	<origin value="/home/nilay/ti/simplelink_msp432p4_sdk_2_20_00_12/examples/rtos/MSP_EXP432P401R/drivers/i2ctmp007/tirtos/ccs/i2ctmp007_MSP_EXP432P401R_tirtos_ccs.projectspec"/>
 	<filesToOpen value=""/>
-	<isTargetManual value="true"/>
+	<isTargetManual value="false"/>
 </projectOptions>

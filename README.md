@@ -9,7 +9,7 @@ Branches to be diverged in future:
 1. Accelerometer: tbd - filters cutoff
 2. Gyroscope: tbd - 
 3. Magnetometer: IN PROGRESS: scroll below for status
-4. Detumbling: IN PROGRESS: navigate [here](https://github.com/nilay994/detumble/tree/master/detumble_bdot)
+4. Detumbling: IN PROGRESS: navigate [here](https://github.com/nilay994/detumble/tree/master/detumble_algo_pc)
 5. Sensor fusion: tbd - understand quaternions, explore Kalman filter, sun sensor + magnetometer
 6. Magnetorquer: tbd - perform self test closed loop (maybe even the thruster with acc)
 
