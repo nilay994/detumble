@@ -19,7 +19,7 @@
 - plots attached below, matlab script committed.
 - fixed t_on by some static variables, real reason for failure under study
 
-![Tumbling parameter plots](https://github.com/nilay994/detumble/blob/master/detumble_bdot/cmp1.jpg)
-![Magnetorquers sign plots](https://github.com/nilay994/detumble/blob/master/detumble_bdot/cmp2.jpg)
-![Magnetorquers time plots](https://github.com/nilay994/detumble/blob/master/detumble_bdot/cmp3.jpg)
-![Tumble count plots](https://github.com/nilay994/detumble/blob/master/detumble_bdot/cmp4.jpg)
+![Tumbling parameter plots](https://github.com/nilay994/detumble/blob/master/detumble_algo_pc/cmp1.jpg)
+![Magnetorquers sign plots](https://github.com/nilay994/detumble/blob/master/detumble_algo_pc/cmp2.jpg)
+![Magnetorquers time plots](https://github.com/nilay994/detumble/blob/master/detumble_algo_pc/cmp3.jpg)
+![Tumble count plots](https://github.com/nilay994/detumble/blob/master/detumble_algo_pc/cmp4.jpg)
