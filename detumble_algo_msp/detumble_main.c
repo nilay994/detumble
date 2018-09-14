@@ -43,33 +43,28 @@ void *mainThread(void *arg0)
     
     UART_Params uartParams;
 
+    /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
     uartParams.writeDataMode = UART_DATA_TEXT;
-    uartParams.writeMode     = UART_MODE_CALLBACK; //TODO: I2C blocking mode significance
-    uartParams.writeCallback = uartCallback;
-    uartParams.readEcho      = UART_ECHO_OFF;
-    uartParams.baudRate      = 115200;
-    uart0 = UART_open(Board_UART0, &uartParams);
-
-
-    /* Create a UART with data processing off. */
-    /*
-    UART_Params_init(&uartParams);
-    uartParams.writeDataMode = UART_DATA_BINARY;
-    uartParams.readDataMode = UART_DATA_BINARY;
-    uartParams.readReturnMode = UART_RETURN_FULL;
+    uartParams.readDataMode = UART_DATA_TEXT;
+    uartParams.readReturnMode = UART_RETURN_NEWLINE;
     uartParams.readEcho = UART_ECHO_OFF;
     uartParams.baudRate = 115200;
-    */
+    uart0 = UART_open(Board_UART0, &uartParams);
+    if (uart0 == NULL) {
+        /* UART_open() failed */
+        while (1);
+    }
 
     /* Configure the LED pin */
     GPIO_setConfig(Board_GPIO_LED0, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);
-    len = snprintf(uartTxBuffer, UART_BUFFER_SIZE, " \n \n------Starting BMX test----- \n \n");
+    len = snprintf(uartTxBuffer, UART_BUFFER_SIZE, " \n \n------SPIN em!----- \n \n");
     UART_write(uart0, uartTxBuffer, len);
 
     /* Turn on user LED */
     GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_ON);
-    usleep(100000);
+    usleep(100000); // warmup
+    
 #if 1
     vector_t mag1Data = {32.7, -7.8, -29.7};
     vector_t mag2Data = {32.7, -8.7, -30.3};
