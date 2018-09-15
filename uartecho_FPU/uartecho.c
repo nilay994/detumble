@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+
 /* Driver Header files */
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include <ti/drivers/GPIO.h>
@@ -54,16 +55,16 @@ void *mainThread(void *arg0)
 {
     FPU_enableModule();
 
-    char *input;
-    input = (char *) malloc(sizeof(char)*200);
+    char *readBuf;
+    readBuf = (char *) malloc(sizeof(char)*200);
 
     char *writeBuf;
     writeBuf = (char *) malloc(sizeof(char)*200);
 
     memset(writeBuf, 0, 200);
-    memset(input, 0, 200);
+    memset(readBuf, 0, 200);
 
-    const char  echoPrompt[] = "loop back test:\r\n";
+    const char echoPrompt[] = "loop back test:\r\n";
 
     UART_Handle uart;
     UART_Params uartParams;
@@ -105,11 +106,11 @@ void *mainThread(void *arg0)
     // TODO: Doubt: How is input being changed if I am not passing the address?
     /* Loop forever echoing */
     while (1) {
-       len = UART_read(uart, input, 200);
+       len = UART_read(uart, readBuf, 200);
        if (len > 0) {
 
         // initialize buffer for each line and split the string by ","
-        token = strtok(input, ",");
+        token = strtok(readBuf, ",");
 
         // populate the readings
         while(token) {
@@ -126,10 +127,10 @@ void *mainThread(void *arg0)
         //len = snprintf(writeBuf, len+1, "%s", input);
         //UART_write(uart, writeBuf, len);
         memset(writeBuf, 0, 200);
-        memset(input, 0, 200);
+        memset(readBuf, 0, 200);
         column = 0;  // reset pointer for CSV parsing token
        }
     }
-    free(input);
+    free(readBuf);
     free(writeBuf);
 }
