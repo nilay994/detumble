@@ -14,7 +14,7 @@ Branches to be diverged in future:
 6. Magnetorquer: tbd - perform self test closed loop (maybe even the thruster with acc)
 
 ## current progress:
-Interfaced BMX-055's magnetometer successfully with the MSP432:
+### Interfaced BMX-055's magnetometer successfully with the MSP432-
 
 - initialized in a good enough (alive) mode - 10 repetitions per axis
 - factory trim read from flash and used in calibration
@@ -27,7 +27,15 @@ Earth's magnetic field with BMX055, Soft and Hard Iron errors visible in plots b
 
 ![iron_error](https://github.com/nilay994/detumble/blob/master/iron_calib.PNG)
 
-Muddy parts (not so sure - will reveal vulnerabilities in test)
+### HIL tests successfully performed on MSP432
+- UART reconfigured
+- skeleton files for HIL test pushed (uartecho) 
+- FPU warmed up, HIL loop closed over serial
+- HIL emulator on python committed - can now flush and parse through serial of MSP432
+- HIL emulator + uartecho + parser + detumble algo tested 
+- test took more than 3 hours, expected time was 1 1/2 hours, plots pushed [here](https://github.com/nilay994/detumble/tree/master/serial_plotter)
+
+### Muddy parts (not so sure - will reveal vulnerabilities in test)
 
 - signed bit flip behaviour not checked strongly
 - not still sure if resolutions and scaling is corresponding to actual uT values
@@ -47,3 +55,8 @@ Muddy parts (not so sure - will reveal vulnerabilities in test)
 Whenever I write HIL tests, I mean something like this: 
 
 ![hil_image](https://github.com/nilay994/detumble/blob/master/hil_tests.jpg)
+
+p = 45*2 = 90 minutes round trip time
+q = FPU time 
+
+total time for HIL test = (p+q) > 1 1/2 hours
