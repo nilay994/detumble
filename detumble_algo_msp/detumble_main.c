@@ -16,22 +16,15 @@
 
 /* Driver handle shared between the task and the callback function */
 UART_Handle uart0;
-uint8_t  txBuffer[1];
-uint8_t  rxBuffer[6];
-char     *uartTxBuffer = NULL;
-int len;
+uint8_t     txBuffer[1];
+uint8_t     rxBuffer[6];
+char        *uartTxBuffer = NULL;
+int         len;
 
 #define TASKSTACKSIZE       1000//640
 #define UART_BUFFER_SIZE    200
-/*
- * Callback function to use the UART in callback mode. It does nothing
- */
-void uartCallback(UART_Handle handle, void *buf, size_t count) {
-    return;
-}
-/**
- * main.c
- */
+
+
 void *mainThread(void *arg0)
 {
     uartTxBuffer = (char *) malloc(sizeof(char)*UART_BUFFER_SIZE);
@@ -42,12 +35,12 @@ void *mainThread(void *arg0)
     UART_init();
     
     UART_Params uartParams;
-
-    /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
     uartParams.writeDataMode = UART_DATA_TEXT;
     uartParams.readDataMode = UART_DATA_TEXT;
     uartParams.readReturnMode = UART_RETURN_NEWLINE;
+    uartParams.writeMode = UART_MODE_BLOCKING;
+    uartParams.readMode = UART_MODE_BLOCKING;
     uartParams.readEcho = UART_ECHO_OFF;
     uartParams.baudRate = 115200;
     uart0 = UART_open(Board_UART0, &uartParams);
@@ -58,12 +51,14 @@ void *mainThread(void *arg0)
 
     /* Configure the LED pin */
     GPIO_setConfig(Board_GPIO_LED0, GPIO_CFG_OUT_STD | GPIO_CFG_OUT_LOW);
+    
     len = snprintf(uartTxBuffer, UART_BUFFER_SIZE, " \n \n------SPIN em!----- \n \n");
     UART_write(uart0, uartTxBuffer, len);
 
-    /* Turn on user LED */
-    GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_ON);
     usleep(100000); // warmup
+
+    /* Turn on user LED, indicate start of process */
+    GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_ON);
     
 #if 1
     vector_t mag1Data = {32.7, -7.8, -29.7};

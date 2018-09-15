@@ -5,15 +5,14 @@
 	<deviceVariant value="MSP432P401R"/>
 	<deviceFamily value="MSP432"/>
 	<deviceEndianness value="little"/>
-	<codegenToolVersion value="18.1.2.LTS"/>
+	<codegenToolVersion value="18.1.3.LTS"/>
 	<isElfFormat value="true"/>
 	<connection value="common/targetdb/connections/TIXDS110_Connection.xml"/>
 	<rts value=""/>
 	<createSlaveProjects value=""/>
 	<ignoreDefaultDeviceSettings value="true"/>
 	<ignoreDefaultCCSSettings value="true"/>
-	<templateProperties value="id=i2ctmp007_MSP_EXP432P401R_tirtos_ccs.projectspec.i2ctmp007_MSP_EXP432P401R_tirtos_ccs,buildProfile=release,isHybrid=true"/>
-	<origin value="/home/nilay/ti/simplelink_msp432p4_sdk_2_20_00_12/examples/rtos/MSP_EXP432P401R/drivers/i2ctmp007/tirtos/ccs/i2ctmp007_MSP_EXP432P401R_tirtos_ccs.projectspec"/>
+	<templateProperties value="id=uartecho_MSP_EXP432P401R_tirtos_ccs.projectspec.uartecho_MSP_EXP432P401R_tirtos_ccs,buildProfile=release,isHybrid=true"/>
+	<origin value="C:\ti\simplelink_msp432p4_sdk_2_20_00_12\examples\rtos\MSP_EXP432P401R\drivers\uartecho\tirtos\ccs\uartecho_MSP_EXP432P401R_tirtos_ccs.projectspec"/>
 	<filesToOpen value=""/>
-	<isTargetManual value="true"/>
 </projectOptions>
