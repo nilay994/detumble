@@ -27,14 +27,6 @@ Earth's magnetic field with BMX055, Soft and Hard Iron errors visible in plots b
 
 ![iron_error](https://github.com/nilay994/detumble/blob/master/iron_calib.PNG)
 
-### HIL tests successfully performed on MSP432
-- UART reconfigured
-- skeleton files for HIL test pushed (uartecho) 
-- FPU warmed up, HIL loop closed over serial
-- HIL emulator on python committed - can now flush and parse through serial of MSP432
-- HIL emulator + uartecho + parser + detumble algo tested 
-- test took more than 3 hours, expected time was 1 1/2 hours, plots pushed [here](https://github.com/nilay994/detumble/tree/master/serial_plotter)
-
 ### Muddy parts (not so sure - will reveal vulnerabilities in test)
 
 - signed bit flip behaviour not checked strongly
@@ -52,11 +44,3 @@ Earth's magnetic field with BMX055, Soft and Hard Iron errors visible in plots b
 4. [serial_plotter](https://github.com/nilay994/detumble/tree/master/serial_plotter): Python and MATLAB scripts for performing HIL tests, plotting comparisons between MATLAB, PC and MSP.
 5. [uartecho_fpu](https://github.com/nilay994/detumble/tree/master/uartecho_fpu): Parsing floats and interpreting newlines might be different for Windows and Linux. Source files in this folder facilitate early stage debugging before moving to HIL tests. 
 
-Whenever I write HIL tests, I mean something like this: 
-
-![hil_image](https://github.com/nilay994/detumble/blob/master/hil_tests.jpg)
-
-p = 45*2 = 90 minutes round trip time
-q = FPU time 
-
-total time for HIL test = (p+q) > 1 1/2 hours
