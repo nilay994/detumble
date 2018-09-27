@@ -41,6 +41,6 @@ Earth's magnetic field with BMX055, Soft and Hard Iron errors visible in plots b
 1. [detumble_algo_msp](https://github.com/nilay994/detumble/tree/master/detumble_algo_msp): Source files for Hardware In Loop (HIL) tests of detumbling algo on MSP432.
 2. [detumble_algo_pc](https://github.com/nilay994/detumble/tree/master/detumble_algo_pc): Source files for detumbling algo meant to be compiled on VS/GCC on PC.
 3. [magnetometer_test](https://github.com/nilay994/detumble/tree/master/magnetometer_test): Source files for talking to the BMX using MSP432, (with trimming and temperature compensation)
-4. [serial_plotter](https://github.com/nilay994/detumble/tree/master/serial_plotter): Python and MATLAB scripts for performing HIL tests, plotting comparisons between MATLAB, PC and MSP.
+4. [plotters](https://github.com/nilay994/detumble/tree/master/plotters): Python and MATLAB scripts for performing HIL tests, magnetometer calibrations, plotting comparisons between MATLAB, PC and MSP.
 5. [uartecho_fpu](https://github.com/nilay994/detumble/tree/master/uartecho_fpu): Parsing floats and interpreting newlines might be different for Windows and Linux. Source files in this folder facilitate early stage debugging before moving to HIL tests. 
 

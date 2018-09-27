@@ -9,12 +9,13 @@ signed char T1[3][3] = {1, 0, 0, 0, 1, 0, 0, 0, -1};
 signed char T2[3][3] = {1, 0, 0, 0, 1, 0, 0, 0, -1};
 vector_t b1_bias = {0,0,0};
 vector_t b2_bias = {0,0,0};
+typedef unsigned char bool;
 /*
  * Description: performs step3 of detumbling on ADCS - Sensor readings and fusion
  * input:  weights, raw and bias values of each sensor
  * output: normalized and fused magnetic field readings.
 */
-void step3_biasCalc(double w1, vector_t b1_raw, vector_t b1_bias, double w2, vector_t b2_raw, vector_t b2_bias, vector_t* b_cur, vector_t* b_cur_norm)
+void step3_biasCalc(float w1, vector_t b1_raw, vector_t b1_bias, float w2, vector_t b2_raw, vector_t b2_bias, vector_t* b_cur, vector_t* b_cur_norm)
 {
 	//vector_t b1_cur; b2_cur; b1_bias; b2_bias; b1_raw; b2_raw, b_cur;
 	vector_t b1_cur, b2_cur;
@@ -33,7 +34,7 @@ void step3_biasCalc(double w1, vector_t b1_raw, vector_t b1_bias, double w2, vec
 	b_cur->y = w1*b1_cur.y + w2*b2_cur.y;
 	b_cur->z = w1*b1_cur.z + w2*b2_cur.z;
 
-	double temp_norm = sqrt(b_cur->x*b_cur->x + b_cur->y*b_cur->y + b_cur->z*b_cur->z);
+	float temp_norm = sqrt(b_cur->x*b_cur->x + b_cur->y*b_cur->y + b_cur->z*b_cur->z);
 	b_cur_norm->x = b_cur->x / temp_norm;
 	b_cur_norm->y = b_cur->y / temp_norm;
 	b_cur_norm->z = b_cur->z / temp_norm;
@@ -41,7 +42,7 @@ void step3_biasCalc(double w1, vector_t b1_raw, vector_t b1_bias, double w2, vec
 	//return b_cur_norm;
 }
 
-double Tc = 0.25; // 4 Hz, 250 ms
+float Tc = 0.25; // 4 Hz, 250 ms
 /*
  * Description: performs step4 of the detumbling on ADCS - Bdot calculation
  * input: b_cur, b_prev, b_cur_norm, b_prev_norm
@@ -75,7 +76,7 @@ void step4_bdotCalc(vector_t b_cur, vector_t b_cur_norm, vector_t b_prev, vector
 }
 
 
-double alpha = 0.01; 
+float alpha = 0.01; 
 /*
  * Description: performs step5 of the detumbling algorithm - tumble parameter update
  * input: alpha, p_tumb, b_dot
@@ -96,8 +97,8 @@ vector_t step5_tumbleParam(vector_t b_dot_norm)
 	return p_tumb;
 }
 
-double detumble_p_bar_upp = 0.085;
-double detumble_p_bar_low = 0.075;
+float detumble_p_bar_upp = 0.085;
+float detumble_p_bar_low = 0.075;
 /*
  * Description: performs step6 of the detumbling algorithm - counter update
  * input: p_tumb
@@ -130,8 +131,8 @@ void step6_countUpdate(vector_t b_dot_norm, unsigned int* c_tumb, unsigned int* 
 	}
 }
 
-double t_conf_tumb = 120;
-double t_conf_detumb = 3600;
+float t_conf_tumb = 120;
+float t_conf_detumb = 3600;
 /*
  * Description: performs step7 of the detumbling algorithm - decision to actuate
  * input: c_tumble, c_detumble
@@ -154,7 +155,7 @@ int step7_assessRotation(unsigned int* c_tumb, unsigned int* c_detumb) //, vecto
 // TODO: Step8 to be implemented on OBC
 
 
-double k_w = 1.2073917;
+float k_w = 1.2073917;
 /*
  * Description: performs step8 of the detumbling algorithm - how much to actuate
  * input: k_w, b_cur, d_dot_norm
@@ -163,15 +164,15 @@ double k_w = 1.2073917;
 vector_t step9_controlCalc(vector_t b_cur, vector_t b_dot_norm)
 {
 	vector_t m_des;
-	double temp_norm = sqrt(b_cur.x*b_cur.x + b_cur.y*b_cur.y + b_cur.z*b_cur.z);
+	float temp_norm = sqrt(b_cur.x*b_cur.x + b_cur.y*b_cur.y + b_cur.z*b_cur.z);
 	m_des.x = -k_w * b_dot_norm.x / temp_norm;
 	m_des.y = -k_w * b_dot_norm.y / temp_norm;
 	m_des.z = -k_w * b_dot_norm.z / temp_norm;
 	return m_des;
 }
 
-double delta = 0.6;
-double Ta;
+float delta = 0.6;
+float Ta;
 
 vector_t m_max = {0.002, 0.002, 0.002};
 vector_t m_pol = { 1, 1, 1 };
@@ -205,14 +206,15 @@ void step10_torqueActuate(vector_t m_des, vector_t m_pol, vector_t* t_on, vector
 	// TODO: add actuation signals
 }
 
-double Ts = 0.02;
+float Ts = 0.02;
 /*
  * Description: Hold for desaturate/hysterisis 
  * input: control, hold and actuation time
  * output: stop processor in the meantime
  */
-double step11_hold()
+float step11_hold()
 {
+	return 0;
 	// delay(Ta+Tc+Ts);
 }
 

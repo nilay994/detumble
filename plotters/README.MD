@@ -9,7 +9,7 @@
 - s_on
 - tumbling parameter
 
-![Tumbling parameter plots](https://github.com/nilay994/detumble/blob/master/serial_plotter/cmp1.jpg)
-![Magnetorquers sign plots](https://github.com/nilay994/detumble/blob/master/serial_plotter/cmp2.jpg)
-![Magnetorquers time plots](https://github.com/nilay994/detumble/blob/master/serial_plotter/cmp3.jpg)
-![Tumble count plots](https://github.com/nilay994/detumble/blob/master/serial_plotter/cmp4.jpg)
+![Tumbling parameter plots](https://github.com/nilay994/detumble/blob/master/plotters/cmp1.jpg)
+![Magnetorquers sign plots](https://github.com/nilay994/detumble/blob/master/plotters/cmp2.jpg)
+![Magnetorquers time plots](https://github.com/nilay994/detumble/blob/master/plotters/cmp3.jpg)
+![Tumble count plots](https://github.com/nilay994/detumble/blob/master/plotters/cmp4.jpg)
