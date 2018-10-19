@@ -33,7 +33,7 @@
 /*
  *    ======== i2ctmp007.c ========
  */
-#include "i2c_bmx055_magnet.h"
+#include "bmx_mag.h"
 /* Driver Header files */
 #include <ti/drivers/GPIO.h>
 #include <ti/drivers/I2C.h>
@@ -113,59 +113,63 @@ int len;
 //     return (NULL);
 // }
 
-void bmxMag_init()
+bool bmxMag_init()
 {
     /* Create I2C for usage */
     i2cParams.bitRate = I2C_400kHz;
     I2C_Params_init(&i2cParams); // try blocking mode
 
-    i2c = I2C_open(I2C_SEN1, &i2cParams);
+    i2c = I2C_open(I2C_SEN2, &i2cParams);
     usleep(200000);
-
+    bool check = 0;
     /* check if i2c handle is assigned */
-    bmxMag_check_i2c();
+    check |= bmxMag_check_i2c();
     usleep(200000);
 
     /* bmx can only goto normal mode via sleep mode.
      * currently, sensor was just powered on and is in suspend mode */
-    bmxMag_goto_sleep();
+    check |= bmxMag_goto_sleep();
     usleep(200000);
 
     /* read chip ID, should return 0x32 if everything is correct */
-    bmxMag_read_id();
+    check |= bmxMag_read_id();
     usleep(200000);
 
     /* (BMM050_NORMAL) data rate is 10 Hz, aka refresh rate */
-    bmxMag_set_datarate();
+    check |= bmxMag_set_datarate();
     usleep(200000);
 
     /* Robert asks for 10 repetitions before flushing */
-    bmxMag_set_repetitions();
+    check |= bmxMag_set_repetitions();
     usleep(200000);
 
     /* example to read the number of repetitions */
     /* read the xy repetitions */
-    bmxMag_get_repetitions();
+    check |= bmxMag_get_repetitions();
     usleep(200000);
-    bmxMag_read_trim();
-    bmxMag_get_bias();
+
+    /* init done. caliberate now */
+    check |= bmxMag_read_trim();
+    check |= bmxMag_get_bias();
+    return check;
 }
 
-void bmxMag_check_i2c()
+bool bmxMag_check_i2c()
 {
     if (i2c == NULL) {
         len = snprintf(uartTxBuffer, UART_BUFFER_SIZE, "Error Initializing I2C \n");
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        return 1;
     }
     else {
         len = snprintf(uartTxBuffer, UART_BUFFER_SIZE, "I2C Initialized! \n");
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        return 0;
     }
 }
 
 bool bmxMag_read_id()
 {
-    bool match = false;
     txBuffer[0] = 0x40;
     i2cTransaction.slaveAddress = BMX_MAG;
     i2cTransaction.writeBuf = txBuffer;
@@ -178,12 +182,14 @@ bool bmxMag_read_id()
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     }
     if (rxBuffer[0] == 0x32) {
-        match = true;
+        return 0;
     }
-    return match;
+    else {
+        return 1;
+    }
 }
 
-void bmxMag_goto_sleep()
+bool bmxMag_goto_sleep()
 {
     /* Point to the magnetometer's registers */
     txBuffer[0] = 0x4B;
@@ -197,10 +203,14 @@ void bmxMag_goto_sleep()
     if (I2C_transfer(i2c, &i2cTransaction)) {
         len = snprintf(uartTxBuffer, 30, "sleep mode active! \n");
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        return 0;
+    }
+    else {
+        return 1;
     }
 }
 
-void bmxMag_set_datarate()
+bool bmxMag_set_datarate()
 {
     txBuffer[0] = 0x4C;
     txBuffer[1] = 0x00;
@@ -211,11 +221,16 @@ void bmxMag_set_datarate()
     if (I2C_transfer(i2c, &i2cTransaction)) {
         len = snprintf(uartTxBuffer, UART_BUFFER_SIZE, "Data rate: 10 Hz, Sensor Mode: Normal \n");
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        return 0;
+    }
+    else {
+        return 1;
     }
 }
 
-void bmxMag_set_repetitions()
+bool bmxMag_set_repetitions()
 {
+    bool check;
     /* Set the XY-repetitions number for Normal mode */
     txBuffer[0] = 0x51;
     txBuffer[1] = 0x04;
@@ -226,7 +241,12 @@ void bmxMag_set_repetitions()
     if (I2C_transfer(i2c, &i2cTransaction)) {
         len = snprintf(uartTxBuffer, UART_BUFFER_SIZE, "XY repetitions: 9 \n");
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        check = 0;
     }
+    else {
+        check = 1;
+    }
+
     usleep(200000);
 
     /* Set the Z-repetitions number for Normal mode */
@@ -239,10 +259,15 @@ void bmxMag_set_repetitions()
     if (I2C_transfer(i2c, &i2cTransaction)) {
         len = snprintf(uartTxBuffer, UART_BUFFER_SIZE, "Z repetitions: 15 \n");
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        check |= 0;
     }
+    else {
+        check = 1;
+    }
+    return check;
 }
 
-void bmxMag_get_repetitions()
+bool bmxMag_get_repetitions()
 {
     txBuffer[0] = 0x51;
     //txBuffer[1] = 0x40;
@@ -255,10 +280,14 @@ void bmxMag_get_repetitions()
     if (I2C_transfer(i2c, &i2cTransaction)) {
         len = snprintf(uartTxBuffer, 30, "(should be 0x04) 0x%02x \n", rxBuffer[0]);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        return 0;
+    }
+    else {
+        return 1;
     }
 }
 
-void bmxMag_get_xyz()
+void bmxMag_get_raw_data()
 {
     int16_t bh, bv, bz;
     /* read the axes */
@@ -292,53 +321,12 @@ len = snprintf(uartTxBuffer, 30, "var: 0x%04x, %x, %d \n", var, var, var);
 UART_write(uart_dbg_bus, uartTxBuffer, len);
 */
 
-/*!
- * @brief Structure containing mag initial parameters
- */
-struct bmm050_t {
-    int8_t   dig_x1;/**< trim x1 data */
-    int8_t   dig_y1;/**< trim y1 data */
-
-    int8_t   dig_x2;/**< trim x2 data */
-    int8_t   dig_y2;/**< trim y2 data */
-
-    uint16_t dig_z1;/**< trim z1 data */
-    int16_t  dig_z2;/**< trim z2 data */
-    int16_t  dig_z3;/**< trim z3 data */
-    int16_t  dig_z4;/**< trim z4 data */
-
-    uint8_t  dig_xy1;/**< trim xy1 data */
-    int8_t   dig_xy2;/**< trim xy2 data */
-
-    uint16_t dig_xyz1;/**< trim xyz1 data */
-};
-
-
-
-/* Trim Extended Registers */
-#define BMM050_DIG_X1                      (0x5D)
-#define BMM050_DIG_Y1                      (0x5E)
-#define BMM050_DIG_Z4_LSB                  (0x62)
-#define BMM050_DIG_Z4_MSB                  (0x63)
-#define BMM050_DIG_X2                      (0x64)
-#define BMM050_DIG_Y2                      (0x65)
-#define BMM050_DIG_Z2_LSB                  (0x68)
-#define BMM050_DIG_Z2_MSB                  (0x69)
-#define BMM050_DIG_Z1_LSB                  (0x6A)
-#define BMM050_DIG_Z1_MSB                  (0x6B)
-#define BMM050_DIG_XYZ1_LSB                (0x6C)
-#define BMM050_DIG_XYZ1_MSB                (0x6D)
-#define BMM050_DIG_Z3_LSB                  (0x6E)
-#define BMM050_DIG_Z3_MSB                  (0x6F)
-#define BMM050_DIG_XY2                     (0x70)
-#define BMM050_DIG_XY1                     (0x71)
-
 struct bmm050_t bmm;
 /* time for challenging factory trim */
-void bmxMag_read_trim()
+bool bmxMag_read_trim()
 {
     usleep(100000);
-
+    bool check;
     txBuffer[0] = BMM050_DIG_X1;
     i2cTransaction.slaveAddress = BMX_MAG;
     i2cTransaction.writeBuf = txBuffer;
@@ -349,6 +337,10 @@ void bmxMag_read_trim()
     if (I2C_transfer(i2c, &i2cTransaction)) {
         len = snprintf(uartTxBuffer, 50, "DIG_X1: 0x%02x, DIG_Y1: 0x%02x \n", rxBuffer[0], rxBuffer[1]);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        check = 0;
+    }
+    else {
+        check = 1;
     }
     bmm.dig_x1 = rxBuffer[0];
     bmm.dig_y1 = rxBuffer[1];
@@ -365,6 +357,10 @@ void bmxMag_read_trim()
     if (I2C_transfer(i2c, &i2cTransaction)) {
         len = snprintf(uartTxBuffer, 50, "DIG_X2: 0x%02x, DIG_Y2: 0x%02x \n", rxBuffer[0], rxBuffer[1]);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        check |= 0;
+    }
+    else {
+        check = 1;
     }
     bmm.dig_x2 = rxBuffer[0];
     bmm.dig_y2 = rxBuffer[1];
@@ -382,6 +378,10 @@ void bmxMag_read_trim()
     if (I2C_transfer(i2c, &i2cTransaction)) {
         len = snprintf(uartTxBuffer, 50, "DIG_XY2: 0x%02x, DIG_XY1: 0x%02x \n", rxBuffer[0], rxBuffer[1]);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        check |= 0;
+    }
+    else {
+        check = 1;
     }
     bmm.dig_xy2 = rxBuffer[0];
     bmm.dig_xy1 = rxBuffer[1];
@@ -399,8 +399,11 @@ void bmxMag_read_trim()
         bmm.dig_z1 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]); // TODO: maybe use this to read from Mag as well
         len = snprintf(uartTxBuffer, 50, "DIG_Z1_LSB: 0x%02x, DIG_Z1_MSB: 0x%02x, Cmb: 0x%04x \n", rxBuffer[0], rxBuffer[1], bmm.dig_z1);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        check |= 0;
     }
-
+    else {
+        check = 1;
+    }
     usleep(100000);
 
     txBuffer[0] = BMM050_DIG_Z2_LSB;
@@ -414,8 +417,11 @@ void bmxMag_read_trim()
         bmm.dig_z2 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]); // TODO: maybe use this to read from Mag as well
         len = snprintf(uartTxBuffer, 50, "DIG_Z2_LSB: 0x%02x, DIG_Z2_MSB: 0x%02x, Cmb: 0x%04x \n", rxBuffer[0], rxBuffer[1], bmm.dig_z2);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        check |= 0;
     }
-
+    else {
+        check = 1;
+    }
     usleep(100000);
 
     txBuffer[0] = BMM050_DIG_XYZ1_LSB;
@@ -429,6 +435,10 @@ void bmxMag_read_trim()
         bmm.dig_xyz1 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]); // TODO: maybe use this to read from Mag as well
         len = snprintf(uartTxBuffer, 50, "DIG_XYZ1_LSB: 0x%02x, DIG_XYZ2_MSB: 0x%02x, Cmb: 0x%04x \n", rxBuffer[0], rxBuffer[1], bmm.dig_xyz1);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        check |= 0;
+    }
+    else {
+        check = 1;
     }
     usleep(100000);
 
@@ -443,6 +453,10 @@ void bmxMag_read_trim()
        bmm.dig_z3 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]); // TODO: maybe use this to read from Mag as well
        len = snprintf(uartTxBuffer, 50, "DIG_Z3_LSB: 0x%02x, DIG_Z3_MSB: 0x%02x, Cmb: 0x%04x \n", rxBuffer[0], rxBuffer[1], bmm.dig_z3);
        UART_write(uart_dbg_bus, uartTxBuffer, len);
+       check |= 0;
+    }
+    else {
+        check = 1;
     }
 
     usleep(100000);
@@ -458,14 +472,21 @@ void bmxMag_read_trim()
         bmm.dig_z4 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]); // TODO: maybe use this to read from Mag as well
         len = snprintf(uartTxBuffer, 50, "DIG_Z4_LSB: 0x%02x, DIG_Z4_MSB: 0x%02x, Cmb: 0x%04x \n", rxBuffer[0], rxBuffer[1], bmm.dig_z4);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
+        check |= 0;
+    }
+    else {
+        check = 1;
     }
     usleep(100000);
+    return check;
 }
 
 int16_t bias_magData[3];
 
-void bmxMag_get_bias()//(int16_t * magData)
+/* Make sure you do a figure of eight */
+bool bmxMag_get_bias()//(int16_t * magData)
 {
+    bool check = 0;
     len = snprintf(uartTxBuffer, 50, "starting bias calib\n");
     UART_write(uart_dbg_bus, uartTxBuffer, len);
 
@@ -529,6 +550,10 @@ void bmxMag_get_bias()//(int16_t * magData)
                 }
                 usleep(100000);
             }
+            check |= 0;
+        }
+        else {
+            check = 1;
         }
     }
     int j;
@@ -549,10 +574,11 @@ void bmxMag_get_bias()//(int16_t * magData)
     UART_write(uart_dbg_bus, uartTxBuffer, len);
 
     usleep(100000);
+    return check;
 }
 
 
-void bmxMag_read_data()//(int16_t * magData)
+void bmxMag_read_calib_data()//(int16_t * magData)
 {
     int16_t mdata_x = 0, mdata_y = 0, mdata_z = 0, temp = 0;
     uint16_t data_r = 0;
@@ -570,7 +596,9 @@ void bmxMag_read_data()//(int16_t * magData)
         if(rxBuffer[6] & 0x01) { // Check if data ready status bit is set
             /*
             mdata_x = (int16_t) (((int16_t)rxBuffer[1] << 8)  | rxBuffer[0]) >> 3;  // 13-bit signed integer for x-axis field
-            mdata_y = (int16_t) (((int16_t)rxBuffer[3] << 8)  | rxBuffer[2]) >> 3;  // 13-bit signed integer for y-axis field
+            mdata_y = (    while(!start_flag) {
+        usleep(1000);
+    }int16_t) (((int16_t)rxBuffer[3] << 8)  | rxBuffer[2]) >> 3;  // 13-bit signed integer for y-axis field
             mdata_z = (int16_t) (((int16_t)rxBuffer[5] << 8)  | rxBuffer[4]) >> 1;  // 15-bit signed integer for z-axis field
             data_r  = (uint16_t) (((uint16_t)rxBuffer[7] << 8)| rxBuffer[6]) >> 2;  // 14-bit unsigned integer for Hall resistance
             */
