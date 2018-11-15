@@ -97,6 +97,6 @@ void bmxMag_get_raw_data();
 
 bool bmxMag_read_trim();
 bool bmxMag_get_bias();
-void bmxMag_read_calib_data();
+void bmxMag_read_calib_data(int16_t comp_MagData[3]);
 
 #endif

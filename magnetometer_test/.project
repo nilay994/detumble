@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>i2c_bmx055_magnet</name>
+	<name>magnetometer_test</name>
 	<comment></comment>
 	<projects>
 		<project>tirtos_builds_MSP_EXP432P401R_release_ccs</project>
