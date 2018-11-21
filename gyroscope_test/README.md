@@ -1,6 +1,6 @@
 ---
 # read MAG of BMX055 for PocketCube 
-Symbolic links made from this project, so keep the bmx_mag and detumble_algo source files build-able
+
 ---
 
 ## to do list: 
