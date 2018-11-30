@@ -84,18 +84,73 @@ struct bmm050_t {
 
 bool bmxMag_init();
 
-bool bmxMag_check_i2c();
-bool bmxMag_read_id();
+/*
+ * @brief read the temperature from the accelerometer cluster
+ * @param dev_id of i2c device: from satellite.h
+ *        temperature: address of temperature variable
+ * @note doesn't belong to the bmxMag library
+ * @return 1 - i2c success
+ */
+bool acc_check_temperature(dev_id id, int *temperature);
 
-bool bmxMag_goto_sleep();
-bool bmxMag_set_datarate();
 
-bool bmxMag_set_repetitions();
-bool bmxMag_get_repetitions();
+/*
+ * @brief send magnetometer to sleep
+ * @param dev_id of i2c device: from satellite.h
+ * @note BMX has to be put to sleep before waking up
+ * @return 1 - i2c success
+ */
+bool bmxMag_goto_sleep(dev_id id);
 
-void bmxMag_get_raw_data();
+/*
+ * @brief read device id from magnetometer
+ * @param dev_id of i2c device: from satellite.h
+ * @note BMX replies with 0x32 if its alive and in sleep mode. Only works after putting to sleep mode.
+ * @return 1 - i2c success
+ */
+bool bmxMag_read_id(dev_id id);
 
-bool bmxMag_read_trim();
+/*
+ * @brief set datarate for refreshing bmx
+ * @param dev_id of i2c device: from satellite.h
+ * @note BMX must be given this always
+ * @return 1 - i2c success
+ */
+bool bmxMag_set_datarate(dev_id id)
+
+/*
+ * @brief set repititions before flusing bmxMag values
+ * @param dev_id of i2c device: from satellite.h
+ * @note BMX must be given this always
+ * @return 1 - i2c success
+ */
+bool bmxMag_set_repetitions(dev_id id);
+
+/*
+ * @brief get repititions before flusing bmxMag values
+ * @param dev_id of i2c device: from satellite.h
+ * @note just a backup function to see if registers are being able to be read from
+ * @return 1 - i2c success
+ */
+bool bmxMag_get_repetitions(dev_id id);
+
+/*
+ * @brief get raw data without trimming or compensation
+ * @param dev_id of i2c device: from satellite.h
+ *        raw_MagData: array of length 3, for uncompenstated 16 bit integers x,y,z
+ * @note just to see if BMX is working
+ * @return 1 - i2c success
+ */
+bool bmxMag_get_raw_data(dev_id id, int16_t raw_MagData[3])
+
+/*
+ * @brief read the trim values from flash for temperature compensation and factory offset calibrations
+ * @param dev_id of i2c device: from satellite.
+ * @note populates a global struct: struct bmm050_t bmm;
+ * @return 1 - i2c success
+ */
+bool bmxMag_read_trim(dev_id id);
+
 bool bmxMag_get_bias();
 void bmxMag_read_calib_data(int16_t comp_MagData[3]);
 
