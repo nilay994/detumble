@@ -1,7 +1,7 @@
 % plot detumble parameter for verifying the C and matlab detumble algorithms
 
-readMatrix_r = csvread('ndata4test_03_in.csv', 1, 0);
-readMatrix_pc = csvread('ndata4test_03_out_pc.csv', 1, 0);
+readMatrix_r = csvread('data4test_03_in2.csv', 1, 0);
+readMatrix_pc = csvread('data4test_03_out_pc3.csv', 1, 0);
 readMatrix_msp = csvread('data4test_03_out_msp.csv', 1, 0);
 
 % to be able to plot incomplete HIL tests, resize everyone to MSP432's
@@ -31,7 +31,7 @@ xlabel('time/sample');
 linkaxes([pu1,pu2,pu3], 'xy');
 saveas(plot_save1,'cmp1','jpg');
 
-%% T_ON (time) for MTQ 
+%% S_ON (time) for MTQ 
 
 plot_save2 = figure(2);
 py1 = subplot(3,3,1);
@@ -64,7 +64,7 @@ plot(readMatrix_msp(:,12)); grid on;
 saveas(plot_save2,'cmp2','jpg');
 linkaxes([py1,py2,py3,py4,py5,py6,py7,py8,py9],'xy');
 
-%% S_ON (direction) for MTQ
+%% t_ON (direction) for MTQ
 
 plot_save3 = figure(3);
 pt1 = subplot(3,3,1);
@@ -123,3 +123,43 @@ title('c_{detumb} - msp');
 
 linkaxes([pv1,pv2,pv3,pv4,pv5,pv6], 'xy');
 saveas(plot_save4,'cmp4','jpg');
+
+
+%% difference (only matlab vs pc)
+% tumb diff
+plot_save5 = figure(5);
+
+pq1 = subplot(4,1,1);
+a1 = readMatrix_r(:,13) - readMatrix_pc(:,13);
+a2 = readMatrix_r(:,14) - readMatrix_pc(:,14);
+a3 = readMatrix_r(:,15) - readMatrix_pc(:,15);
+plot(a1); hold on; plot(a2); plot(a3);
+title('p_{tumb} diff');
+
+% sign diff
+pq2 = subplot(4,1,2);
+b1 = readMatrix_r(:,10) - readMatrix_pc(:,10);
+b2 = readMatrix_r(:,11) - readMatrix_pc(:,11);
+b3 = readMatrix_r(:,12) - readMatrix_pc(:,12);
+plot(b1); hold on; plot(b2); plot(b3);
+title('sign diff');
+
+% time (t_on) diff
+pq3 = subplot(4,1,3);
+c1 = readMatrix_r(:,7) - readMatrix_pc(:,7);
+c2 = readMatrix_r(:,8) - readMatrix_pc(:,8);
+c3 = readMatrix_r(:,9) - readMatrix_pc(:,9);
+plot(c1); hold on; plot(c2); plot(c3);
+title('time diff');
+
+% count diff
+pq4 = subplot(4,1,4);
+d1 = readMatrix_r(:,16) - readMatrix_pc(:,16);
+d2 = readMatrix_r(:,17) - readMatrix_pc(:,17);
+plot(d1); hold on; plot(d2);
+title('count diff');
+
+linkaxes([pq1,pq2,pq3,pq4], 'x');
+saveas(plot_save5,'cmp5','jpg');
+% note: by inspecting readMatrix_r(find(b3), 9), the consquence
+% of wrong sign on the t_on can be checked. 

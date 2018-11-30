@@ -1,7 +1,7 @@
 clear; clc;
  
 %User Defined Properties 
-serialPort = 'COM9';           % define COM port #
+serialPort = 'COM6';           % define COM port #
 plotTitle = 'PocketCube-MAG';  % plot title
 plotGrid = 'on';               % 'off' to turn off grid
 min = -10000;                  % set y-min
@@ -60,9 +60,9 @@ tic
 while ishandle(plotGraph1) %Loop when Plot is Active 
     dat = fgets(s); %Read Data from Serial as Float
     C = strsplit(dat);
-    temp1 = str2double(C(3)); 
-    temp2 = str2double(C(5));
-    temp3 = str2double(C(7));
+    temp1 = str2double(C(5)); 
+    temp2 = str2double(C(7));
+    temp3 = str2double(C(9));
     
     if(~isempty(dat))               % Make sure Data Type is Correct        
         count = count + 1;    

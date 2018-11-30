@@ -11,7 +11,7 @@ check accuracy of double/ undersaturating points
 */
 
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	if (argc < 2) {
 		printf("ERR: supply arguments correctly \n");
@@ -26,12 +26,12 @@ void main(int argc, char *argv[])
 	FILE *csv_output;
 	char buf[LINE_BUFFER] = { 0 };
 	//csv_input = fopen(argv[1], "r");
-	csv_input = fopen("ndata4test_03_in.csv", "r");
+	csv_input = fopen("data4test_03_in2.csv", "r");
 	if (csv_input == NULL) {
 		printf("failed to open input csv\n");
 	}
 
-	csv_output = fopen("ndata4test_03_out.csv", "w");
+	csv_output = fopen("data4test_03_out2.csv", "w");
 	if (csv_output == NULL) {
 		printf("failed to open output csv\n");
 	}
@@ -105,6 +105,6 @@ void main(int argc, char *argv[])
 	}
 	fclose(csv_input);
 	fclose(csv_output);
-	getch();
-	return(NULL);
+	//getch();
+	return 0;
 }

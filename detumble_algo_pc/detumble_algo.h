@@ -54,12 +54,13 @@ extern "C" {
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 typedef struct {
-	float x; 
-	float y; 
-	float z;
+	double x; 
+	double y; 
+	double z;
 } vector_t;
 
-void step3_biasCalc(float w1, vector_t b1_raw, vector_t b1_bias, float w2, vector_t b2_raw, vector_t b2_bias, vector_t* b_cur, vector_t* b_cur_norm);
+int sign_fn(double a);
+void step3_biasCalc(double w1, vector_t b1_raw, vector_t b1_bias, double w2, vector_t b2_raw, vector_t b2_bias, vector_t* b_cur, vector_t* b_cur_norm);
 void step4_bdotCalc(vector_t b_cur, vector_t b_cur_norm, vector_t b_prev, vector_t b_prev_norm, vector_t* b_dot, vector_t* b_dot_norm);
 vector_t step5_tumbleParam(vector_t b_dot);
 void step6_countUpdate(vector_t p_tumb, unsigned int* c_tumb, unsigned int* c_detumb);
@@ -67,7 +68,7 @@ int step7_assessRotation(unsigned int* c_tumb, unsigned int* c_detumb);//, vecto
 // TODO: Step8 to be implemented on OBC
 vector_t step9_controlCalc(vector_t b_cur, vector_t b_dot_norm);
 void step10_torqueActuate(vector_t m_des, vector_t m_pol, vector_t* t_on, vector_t* s_on);
-float step11_hold();
+double step11_hold();
 
 void controlLoop(vector_t b1_raw, vector_t b2_raw, 
 				 vector_t* s_on, vector_t* t_on, vector_t* p_tumb, 
