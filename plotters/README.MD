@@ -13,3 +13,4 @@
 ![Magnetorquers sign plots](https://github.com/nilay994/detumble/blob/master/plotters/cmp2.jpg)
 ![Magnetorquers time plots](https://github.com/nilay994/detumble/blob/master/plotters/cmp3.jpg)
 ![Tumble count plots](https://github.com/nilay994/detumble/blob/master/plotters/cmp4.jpg)
+![diff plots](https://github.com/nilay994/detumble/blob/master/plotters/cmp5.jpg)
