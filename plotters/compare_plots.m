@@ -1,8 +1,8 @@
 % plot detumble parameter for verifying the C and matlab detumble algorithms
 
-readMatrix_r = csvread('data4test_03_in2.csv', 1, 0);
-readMatrix_pc = csvread('data4test_03_out_pc3.csv', 1, 0);
-readMatrix_msp = csvread('data4test_03_out_msp.csv', 1, 0);
+readMatrix_r = csvread('data4test_03_in.csv', 1, 0);
+readMatrix_pc = csvread('data4test_04_in.csv', 1, 0);
+readMatrix_msp = csvread('data4test_04_out_msp.csv', 1, 0);
 
 % to be able to plot incomplete HIL tests, resize everyone to MSP432's
 % iterates

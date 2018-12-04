@@ -78,12 +78,13 @@ void *mainThread(void *arg0)
     // init parsing variables
     char *token = 0;
     int column = 0;
-    float parse_row[17];
+    float parse_row[6];
 
     /* unidenitified registers from earlier code, study effect under large execution time on FPU*/
     // WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;      // stop watchdog timer
     
     while(1) {
+
         len = UART_read(uart0, readBuf, UART_BUFFER_SIZE);
 
         // if read is successful, parse the csv row
@@ -109,7 +110,7 @@ void *mainThread(void *arg0)
             // they are just incremented by controlLoop
             static unsigned int c_tumb = 0;
             static unsigned int c_detumb = 0;
-
+            GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_ON);
             controlLoop(mag1Data, mag2Data, &s_on, &t_on, &p_tumb, &c_tumb, &c_detumb);
             len = snprintf(writeBuf, UART_BUFFER_SIZE, 
                 "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d\n",
@@ -120,9 +121,10 @@ void *mainThread(void *arg0)
                 p_tumb.x, p_tumb.y, p_tumb.z,
                 c_tumb, c_detumb);
 
+
             // flush result to python 
             UART_write(uart0, writeBuf, len);
-
+            GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_OFF);
             // preliminaries before next csv read
             memset(writeBuf, 0, 200);
             memset(readBuf, 0, 200);
