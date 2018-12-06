@@ -82,6 +82,7 @@ void *mainThread(void *arg0)
 
     /* unidenitified registers from earlier code, study effect under large execution time on FPU*/
     // WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;      // stop watchdog timer
+    int cnt = 0;
     
     while(1) {
 
@@ -110,7 +111,7 @@ void *mainThread(void *arg0)
             // they are just incremented by controlLoop
             static unsigned int c_tumb = 0;
             static unsigned int c_detumb = 0;
-            GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_ON);
+            //GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_ON);
             controlLoop(mag1Data, mag2Data, &s_on, &t_on, &p_tumb, &c_tumb, &c_detumb);
             len = snprintf(writeBuf, UART_BUFFER_SIZE, 
                 "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%d,%d\n",
@@ -121,10 +122,16 @@ void *mainThread(void *arg0)
                 p_tumb.x, p_tumb.y, p_tumb.z,
                 c_tumb, c_detumb);
 
+            cnt ++;
+
+            if (cnt % 50 == 0) {
+                GPIO_toggle(Board_GPIO_LED0);
+            }
 
             // flush result to python 
             UART_write(uart0, writeBuf, len);
-            GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_OFF);
+
+            //GPIO_write(Board_GPIO_LED0, Board_GPIO_LED_OFF);
             // preliminaries before next csv read
             memset(writeBuf, 0, 200);
             memset(readBuf, 0, 200);
