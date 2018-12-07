@@ -30,9 +30,6 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *    ======== i2ctmp007.c ========
- */
 #include "bmx_mag.h"
 /* Driver Header files */
 #include <ti/drivers/GPIO.h>
@@ -119,10 +116,10 @@ bool acc_check_temperature(dev_id id, int *temperature)
     // check temperature from accelerometer cluster
     txBuffer[0] = 0x08;
     bool res = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 1);
-    *temp = rxBuffer[0];
+    *temperature = rxBuffer[0];
 
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 50, "temperature1: 0x%02x, t check %d\n", *temp,  check);
+        len = snprintf(uartTxBuffer, 50, "temperature: 0x%02x, res: %d\n", *temperature, res);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
@@ -152,7 +149,7 @@ bool bmxMag_read_id(dev_id id)
     txBuffer[0] = 0x40;
     bool res = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 1);
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 30, "ID: 0x%02x, %d\n", rxBuffer[0], res1);
+        len = snprintf(uartTxBuffer, 30, "ID: 0x%02x, %d\n", rxBuffer[0], res);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
     return res;
@@ -253,8 +250,8 @@ bool bmxMag_read_trim(dev_id id)
     bmm.dig_y2 = rxBuffer[1];
 
     #ifdef DBG
-            len = snprintf(uartTxBuffer, 50, "DIG_X2: 0x%02x, DIG_Y2: 0x%02x, result:%d\n", rxBuffer[0], rxBuffer[1], res2);
-            UART_write(uart_dbg_bus, uartTxBuffer, len);
+        len = snprintf(uartTxBuffer, 50, "DIG_X2: 0x%02x, DIG_Y2: 0x%02x, result:%d\n", rxBuffer[0], rxBuffer[1], res2);
+        UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
     usleep(100000);
@@ -329,27 +326,36 @@ bool bmxMag_read_trim(dev_id id)
     return check;
 }
 
-bool bmxMag_get_bias(int16_t bias_magData[3])//(int16_t * magData)
+
+/*
+ * let's go figure of eight
+ * */
+bool bmxMag_get_bias(dev_id id, int16_t bias_magData[3])//(int16_t * magData)
 {
-    bool check = 0;
 	#ifdef DBG
 		len = snprintf(uartTxBuffer, 50, "starting bias calib\n");
 		UART_write(uart_dbg_bus, uartTxBuffer, len);
 	#endif
-    int16_t mdata_x = 0, mdata_y = 0, mdata_z = 0, temp = 0;
+
+    int16_t  mdata_x = 0, mdata_y = 0, mdata_z = 0, temp = 0;
     uint16_t data_r = 0;
-    uint8_t rxBuffer[8];  // x/y/z hall magnetic field data, and Hall resistance data
-    int16_t magData[3];
+    uint8_t  rxBuffer[8];  // x/y/z hall magnetic field data, and Hall resistance data
+    int16_t  magData[3];
 
     int16_t min_magData[3] = {0,0,0}; // maybe use some other initialization
     int16_t max_magData[3] = {0,0,0};
 
-    txBuffer[0] = 0x42;
-    bool res = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 8);
 
-    int bias_cnt;
+    uint8_t bias_cnt;
+    txBuffer[0] = 0x42;
+    bool res;
+
     for(bias_cnt = 0; bias_cnt < 100; bias_cnt++) {
-        if (res == 1) {
+
+        res = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 8);
+
+        if (res) {
+
             if(rxBuffer[6] & 0x01) { // Check if data ready status bit is set
                 /*
                 mdata_x = (int16_t) (((int16_t)rxBuffer[1] << 8)  | rxBuffer[0]) >> 3;  // 13-bit signed integer for x-axis field
@@ -361,7 +367,7 @@ bool bmxMag_get_bias(int16_t bias_magData[3])//(int16_t * magData)
                 mdata_x = (int16_t) ((((int32_t)((int8_t) rxBuffer[1])) << 5)  | ((rxBuffer[0] & 0xF8) >> 3));
                 mdata_y = (int16_t) ((((int32_t)((int8_t) rxBuffer[3])) << 5)  | ((rxBuffer[2] & 0xF8) >> 3));
                 mdata_z = (int16_t) ((((int32_t)((int8_t) rxBuffer[5])) << 7)  | ((rxBuffer[4] & 0xFE) >> 1));
-                data_r  = (uint16_t)((((uint32_t)          rxBuffer[7]) << 6)  | ((rxBuffer[6] & 0xFC) >> 2));
+                data_r  = (uint16_t)((((uint32_t)         rxBuffer[7]) << 6)   | ((rxBuffer[6] & 0xFC) >> 2));
                 // to verify with Bosch email
                 // mdata_x = -88; mdata_y = -17; mdata_z = 113; data_r = 6290;
 
@@ -393,13 +399,9 @@ bool bmxMag_get_bias(int16_t bias_magData[3])//(int16_t * magData)
                 }
                 usleep(100000);
             }
-            check |= 0;
-        }
-        else {
-            check = 1;
         }
     }
-    int j;
+    uint8_t j;
     // comment later: no need to plot min max, go for bias
     for (j=0; j<3; j++) {
 		#ifdef DBG
@@ -409,7 +411,6 @@ bool bmxMag_get_bias(int16_t bias_magData[3])//(int16_t * magData)
         usleep(100000);
     }
 
-    j = 0;
     // explain why average of min max is a good way to go, and not average of all readings
     for (j=0; j<3; j++) {
         bias_magData[j] = (min_magData[j] + max_magData[j]) >> 1;
@@ -419,31 +420,30 @@ bool bmxMag_get_bias(int16_t bias_magData[3])//(int16_t * magData)
 		UART_write(uart_dbg_bus, uartTxBuffer, len);
 	#endif
     usleep(100000);
-    return check;
+    return res;
 }
 
 
-void bmxMag_read_calib_data(int16_t comp_MagData[3], int16_t bias_MagData[3])//(int16_t * magData))
+bool bmxMag_read_calib_data(dev_id id, int16_t comp_magData[3], int16_t bias_magData[3])
 {
     int16_t mdata_x = 0, mdata_y = 0, mdata_z = 0, temp = 0;
     uint16_t data_r = 0;
     uint8_t rxBuffer[8];  // x/y/z hall magnetic field data, and Hall resistance data
+
     int16_t magData[3];
-    int16_t comp_magData[3];
+
+    bool res = 0;
     txBuffer[0] = 0x42;
-    i2cTransaction.slaveAddress = BMX_MAG;
-    i2cTransaction.writeBuf = txBuffer;
-    i2cTransaction.writeCount = 1;
-    i2cTransaction.readBuf = rxBuffer;
-    i2cTransaction.readCount = 8;
-    
-    if (I2C_transfer(i2c, &i2cTransaction)) {
+
+    res = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 8);
+
+    if (res) {
         if(rxBuffer[6] & 0x01) { // Check if data ready status bit is set
             /*
             mdata_x = (int16_t) (((int16_t)rxBuffer[1] << 8)  | rxBuffer[0]) >> 3;  // 13-bit signed integer for x-axis field
             mdata_y = (    while(!start_flag) {
-        usleep(1000);
-    }int16_t) (((int16_t)rxBuffer[3] << 8)  | rxBuffer[2]) >> 3;  // 13-bit signed integer for y-axis field
+                usleep(1000);
+            }int16_t) (((int16_t)rxBuffer[3] << 8)  | rxBuffer[2]) >> 3;  // 13-bit signed integer for y-axis field
             mdata_z = (int16_t) (((int16_t)rxBuffer[5] << 8)  | rxBuffer[4]) >> 1;  // 15-bit signed integer for z-axis field
             data_r  = (uint16_t) (((uint16_t)rxBuffer[7] << 8)| rxBuffer[6]) >> 2;  // 14-bit unsigned integer for Hall resistance
             */
@@ -475,20 +475,21 @@ void bmxMag_read_calib_data(int16_t comp_MagData[3], int16_t bias_MagData[3])//(
 
             magData[2] = (((((int32_t)(mdata_z - bmm.dig_z4)) << 15) - ((((int32_t)bmm.dig_z3) * ((int32_t)(((int16_t)data_r) -
             ((int16_t)bmm.dig_xyz1))))>>2))/(bmm.dig_z2 + ((int16_t)(((((int32_t)bmm.dig_z1) * ((((int16_t)data_r) << 1)))+(1<<15))>>16))));
-            int cnt = 0;
+
+            uint8_t cnt = 0;
+
             for (cnt = 0; cnt<3; cnt++) {
                 comp_magData[cnt] = magData[cnt] - bias_magData[cnt];
             }
-			#ifdef DBG
-				len = snprintf(uartTxBuffer, 50, "bh: %d bv: %d bz: %d\n", comp_magData[0], comp_magData[1], comp_magData[2]);
-				UART_write(uart_dbg_bus, uartTxBuffer, len);
-			#endif
+            #ifdef DBG
+                len = snprintf(uartTxBuffer, 50, "bh: %d bv: %d bz: %d\n", comp_magData[0], comp_magData[1], comp_magData[2]);
+                UART_write(uart_dbg_bus, uartTxBuffer, len);
+            #endif
             // usleep(100000);
         }
     }
+    return res;
 }
-
-
 /*
         // test if merge word works without typecasting
         int16_t var;

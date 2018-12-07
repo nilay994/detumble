@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
+#include <satellite.h>
 /*!
  * @brief Structure containing mag initial parameters
  */
@@ -116,7 +116,7 @@ bool bmxMag_read_id(dev_id id);
  * @note BMX must be given this always
  * @return 1 - i2c success
  */
-bool bmxMag_set_datarate(dev_id id)
+bool bmxMag_set_datarate(dev_id id);
 
 /*
  * @brief set repititions before flusing bmxMag values
@@ -141,17 +141,32 @@ bool bmxMag_get_repetitions(dev_id id);
  * @note just to see if BMX is working
  * @return 1 - i2c success
  */
-bool bmxMag_get_raw_data(dev_id id, int16_t raw_MagData[3])
+bool bmxMag_get_raw_data(dev_id id, int16_t raw_MagData[3]);
 
 /*
  * @brief read the trim values from flash for temperature compensation and factory offset calibrations
- * @param dev_id of i2c device: from satellite.
+ * @param dev_id of i2c device: from satellite.h
  * @note populates a global struct: struct bmm050_t bmm;
  * @return 1 - i2c success
  */
 bool bmxMag_read_trim(dev_id id);
 
-bool bmxMag_get_bias();
-void bmxMag_read_calib_data(int16_t comp_MagData[3]);
+/*
+ * @brief read the bias of the respective magnetometer
+ * @param dev_id of i2c device: from satellite.h
+ * @param bias_magData: address of temp array
+ * @note populates a bias array
+ * @return 1 - i2c success
+ */
+bool bmxMag_get_bias(dev_id id, int16_t bias_magData[3]);
+
+/*
+ * @brief read the compensated/caliberated values from respective magnetometer
+ * @param dev_id of i2c device: from satellite.h
+ * @param bias_magData: input variable - bias from bmxMag_get_bias
+ * @note populates an array comp_magData - output
+ * @return 1 - i2c success
+ */
+bool bmxMag_read_calib_data(dev_id id, int16_t comp_magData[3], int16_t bias_magData[3]);
 
 #endif
