@@ -69,7 +69,7 @@ int len;
 
 /* NOTE: I2C handles must be preallocated in hal_subsystem.c before calling bmxMag_init */
 
-bool bmxMag_init()
+bool bmxMag_init(int16_t mag1_bias[3], int16_t mag2_bias[3])
 {
     bool check = 1;
 
@@ -92,21 +92,32 @@ bool bmxMag_init()
     usleep(200000);
 
     /* (BMM050_NORMAL) data rate is 10 Hz, aka refresh rate */
-    check |= bmxMag_set_datarate();
+    check &= bmxMag_set_datarate(ADCS_MAG1_DEV_ID);
+    check &= bmxMag_set_datarate(ADCS_MAG2_DEV_ID);
     usleep(200000);
 
     /* Robert asks for 10 repetitions before flushing */
-    check |= bmxMag_set_repetitions();
+    check &= bmxMag_set_repetitions(ADCS_MAG1_DEV_ID);
+    check &= bmxMag_set_repetitions(ADCS_MAG2_DEV_ID);
     usleep(200000);
 
     /* example to read the number of repetitions */
     /* read the xy repetitions */
-    check |= bmxMag_get_repetitions();
+    check &= bmxMag_get_repetitions(ADCS_MAG1_DEV_ID);
+    check &= bmxMag_get_repetitions(ADCS_MAG2_DEV_ID);
     usleep(200000);
 
-    /* init done. caliberate now */
-    check |= bmxMag_read_trim();
-    check |= bmxMag_get_bias();
+    /* init done. calibrate now */
+    struct bmm050_t bmm1;
+    struct bmm050_t bmm2;
+    // populate structs for each sensor
+    check &= bmxMag_read_trim(ADCS_MAG1_DEV_ID, &bmm1);
+    check &= bmxMag_read_trim(ADCS_MAG2_DEV_ID, &bmm2);
+
+    // populate bias for each sensor
+    check &= bmxMag_get_bias(ADCS_MAG1_DEV_ID, mag1_bias, bmm1);
+    check &= bmxMag_get_bias(ADCS_MAG2_DEV_ID, mag2_bias, bmm2);
+
     return check;
 }
 
@@ -198,7 +209,7 @@ bool bmxMag_get_repetitions(dev_id id)
     txBuffer[0] = 0x51;
     bool res = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 1);
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 30, "(should be 0x04) 0x%02x, result: %d\n", rxBuffer[0], res);
+        len = snprintf(uartTxBuffer, 30, "(should be 0x04) 0x%02x, res:%d\n", rxBuffer[0], res);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
     return res;
@@ -215,7 +226,7 @@ bool bmxMag_get_raw_data(dev_id id, int16_t raw_MagData[3])
     raw_MagData[2] = rxBuffer[5] << 8 | (rxBuffer[4] & 0xFE);  // lim: pm 16383
 
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 30, "bh: %d bv: %d bz: %d, result:%d\n", raw_MagData[0], raw_MagData[1], raw_MagData[2], res);
+        len = snprintf(uartTxBuffer, 30, "bh: %d bv: %d bz: %d, res:%d\n", raw_MagData[0], raw_MagData[1], raw_MagData[2], res);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
     return res;
@@ -224,21 +235,21 @@ bool bmxMag_get_raw_data(dev_id id, int16_t raw_MagData[3])
 /* time for challenging factory trim */
 
 // populate the global variables in the struct by reading from flash of BMX, so the later functions can use it.
-struct bmm050_t bmm;
+//struct bmm050_t bmm;
 
 
-bool bmxMag_read_trim(dev_id id)
+bool bmxMag_read_trim(dev_id id, struct bmm050_t* bmm)
 {
     usleep(100000);
     bool check;
 
     txBuffer[0] = BMM050_DIG_X1;
     bool res1 = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 2);
-    bmm.dig_x1 = rxBuffer[0];
-    bmm.dig_y1 = rxBuffer[1];
+    bmm->dig_x1 = rxBuffer[0];
+    bmm->dig_y1 = rxBuffer[1];
 
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 50, "DIG_X1: 0x%02x, DIG_Y1: 0x%02x, result:%d\n", rxBuffer[0], rxBuffer[1], res1);
+        len = snprintf(uartTxBuffer, 50, "DIG_X1: 0x%02x, DIG_Y1: 0x%02x, res:%d\n", rxBuffer[0], rxBuffer[1], res1);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
@@ -246,11 +257,11 @@ bool bmxMag_read_trim(dev_id id)
 
     txBuffer[0] = BMM050_DIG_X2;
     bool res2 = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 2);
-    bmm.dig_x2 = rxBuffer[0];
-    bmm.dig_y2 = rxBuffer[1];
+    bmm->dig_x2 = rxBuffer[0];
+    bmm->dig_y2 = rxBuffer[1];
 
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 50, "DIG_X2: 0x%02x, DIG_Y2: 0x%02x, result:%d\n", rxBuffer[0], rxBuffer[1], res2);
+        len = snprintf(uartTxBuffer, 50, "DIG_X2: 0x%02x, DIG_Y2: 0x%02x, res:%d\n", rxBuffer[0], rxBuffer[1], res2);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
@@ -259,20 +270,20 @@ bool bmxMag_read_trim(dev_id id)
     /* be careful big endian */
     txBuffer[0] = BMM050_DIG_XY2;
     bool res3 = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 2);
-    bmm.dig_xy2 = rxBuffer[0];
-    bmm.dig_xy1 = rxBuffer[1];
+    bmm->dig_xy2 = rxBuffer[0];
+    bmm->dig_xy1 = rxBuffer[1];
     #ifdef DBG
-            len = snprintf(uartTxBuffer, 50, "DIG_XY2: 0x%02x, DIG_XY1: 0x%02x, result:%d\n", rxBuffer[0], rxBuffer[1], res3);
-            UART_write(uart_dbg_bus, uartTxBuffer, len);
+        len = snprintf(uartTxBuffer, 50, "DIG_XY2: 0x%02x, DIG_XY1: 0x%02x, res:%d\n", rxBuffer[0], rxBuffer[1], res3);
+        UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
     usleep(100000);
 
     txBuffer[0] = BMM050_DIG_Z1_LSB;
     bool res4 = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 2);
-    bmm.dig_z1 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]); // TODO: maybe use this to read from Mag as well
+    bmm->dig_z1 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]); // TODO: maybe use this to read from Mag as well
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 50, "DIG_Z1_LSB: 0x%02x, DIG_Z1_MSB: 0x%02x, Cmb: 0x%04x, result:%d\n", rxBuffer[0], rxBuffer[1], bmm.dig_z1, res4);
+        len = snprintf(uartTxBuffer, 100, "DIG_Z1_LSB: 0x%02x, DIG_Z1_MSB: 0x%02x, Cmb: 0x%04x, res:%d\n", rxBuffer[0], rxBuffer[1], bmm->dig_z1, res4);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
@@ -280,19 +291,19 @@ bool bmxMag_read_trim(dev_id id)
 
     txBuffer[0] = BMM050_DIG_Z2_LSB;
     bool res5 = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 2);
-    bmm.dig_z2 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]);
+    bmm->dig_z2 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]);
     #ifdef DBG
-            len = snprintf(uartTxBuffer, 50, "DIG_Z2_LSB: 0x%02x, DIG_Z2_MSB: 0x%02x, Cmb: 0x%04x, result:%d\n", rxBuffer[0], rxBuffer[1], bmm.dig_z2, res5);
-            UART_write(uart_dbg_bus, uartTxBuffer, len);
+        len = snprintf(uartTxBuffer, 100, "DIG_Z2_LSB: 0x%02x, DIG_Z2_MSB: 0x%02x, Cmb: 0x%04x, res:%d\n", rxBuffer[0], rxBuffer[1], bmm->dig_z2, res5);
+        UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
     usleep(100000);
 
     txBuffer[0] = BMM050_DIG_XYZ1_LSB;
     bool res6 = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 2);
-    bmm.dig_xyz1 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]);
+    bmm->dig_xyz1 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]);
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 100, "DIG_XYZ1_LSB: 0x%02x, DIG_XYZ2_MSB: 0x%02x, Cmb: 0x%04x, result:%d\n", rxBuffer[0], rxBuffer[1], bmm.dig_xyz1, res6);
+        len = snprintf(uartTxBuffer, 100, "DIG_XYZ1_LSB: 0x%02x, DIG_XYZ2_MSB: 0x%02x, Cmb: 0x%04x, res:%d\n", rxBuffer[0], rxBuffer[1], bmm->dig_xyz1, res6);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
@@ -300,9 +311,9 @@ bool bmxMag_read_trim(dev_id id)
 
     txBuffer[0] = BMM050_DIG_Z3_LSB;
     bool res7 = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 2);
-    bmm.dig_z3 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]);
+    bmm->dig_z3 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]);
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 100, "DIG_Z3_LSB: 0x%02x, DIG_Z3_MSB: 0x%02x, Cmb: 0x%04x, result:%d\n", rxBuffer[0], rxBuffer[1], bmm.dig_z3, res7);
+        len = snprintf(uartTxBuffer, 100, "DIG_Z3_LSB: 0x%02x, DIG_Z3_MSB: 0x%02x, Cmb: 0x%04x, res:%d\n", rxBuffer[0], rxBuffer[1], bmm->dig_z3, res7);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
@@ -310,9 +321,9 @@ bool bmxMag_read_trim(dev_id id)
 
     txBuffer[0] = BMM050_DIG_Z4_LSB;
     bool res8 = HAL_I2C_readWrite(id, txBuffer, 1, rxBuffer, 2);
-    bmm.dig_z4 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]); // TODO: maybe use this to read from Mag as well
+    bmm->dig_z4 = (uint16_t) (((uint16_t)(rxBuffer[1] << 8))|rxBuffer[0]); // TODO: maybe use this to read from Mag as well
     #ifdef DBG
-        len = snprintf(uartTxBuffer, 50, "DIG_Z4_LSB: 0x%02x, DIG_Z4_MSB: 0x%02x, Cmb: 0x%04x, result:%d\n", rxBuffer[0], rxBuffer[1], bmm.dig_z4, res8);
+        len = snprintf(uartTxBuffer, 100, "DIG_Z4_LSB: 0x%02x, DIG_Z4_MSB: 0x%02x, Cmb: 0x%04x, res:%d\n", rxBuffer[0], rxBuffer[1], bmm->dig_z4, res8);
         UART_write(uart_dbg_bus, uartTxBuffer, len);
     #endif
 
@@ -330,7 +341,7 @@ bool bmxMag_read_trim(dev_id id)
 /*
  * let's go figure of eight
  * */
-bool bmxMag_get_bias(dev_id id, int16_t bias_magData[3])//(int16_t * magData)
+bool bmxMag_get_bias(dev_id id, int16_t mag_bias[3], struct bmm050_t bmm)
 {
 	#ifdef DBG
 		len = snprintf(uartTxBuffer, 50, "starting bias calib\n");
@@ -413,10 +424,10 @@ bool bmxMag_get_bias(dev_id id, int16_t bias_magData[3])//(int16_t * magData)
 
     // explain why average of min max is a good way to go, and not average of all readings
     for (j=0; j<3; j++) {
-        bias_magData[j] = (min_magData[j] + max_magData[j]) >> 1;
+        mag_bias[j] = (min_magData[j] + max_magData[j]) >> 1;
     }
 	#ifdef DBG
-		len = snprintf(uartTxBuffer, 50, "bias: x: %d y: %d z: %d\n", bias_magData[0], bias_magData[1], bias_magData[2]);
+		len = snprintf(uartTxBuffer, 50, "bias: x: %d y: %d z: %d\n", mag_bias[0], mag_bias[1], mag_bias[2]);
 		UART_write(uart_dbg_bus, uartTxBuffer, len);
 	#endif
     usleep(100000);
@@ -424,7 +435,7 @@ bool bmxMag_get_bias(dev_id id, int16_t bias_magData[3])//(int16_t * magData)
 }
 
 
-bool bmxMag_read_calib_data(dev_id id, int16_t comp_magData[3], int16_t bias_magData[3])
+bool bmxMag_read_calib_data(dev_id id, int16_t comp_magData[3], int16_t bias_magData[3], struct bmm050_t bmm)
 {
     int16_t mdata_x = 0, mdata_y = 0, mdata_z = 0, temp = 0;
     uint16_t data_r = 0;

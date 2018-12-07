@@ -82,7 +82,13 @@ struct bmm050_t {
 #define BMM050_DIG_XY1                     (0x71)
 
 
-bool bmxMag_init();
+/*
+ * @brief initialize the bmx for continuous compensated readings
+ * @param mag1(2)_bias: output bias after trimming and figure of eight
+ * @return 1 - bias success
+ */
+bool bmxMag_init(int16_t mag1_bias[3], int16_t mag2_bias[3]);
+
 
 /*
  * @brief read the temperature from the accelerometer cluster
@@ -146,27 +152,29 @@ bool bmxMag_get_raw_data(dev_id id, int16_t raw_MagData[3]);
 /*
  * @brief read the trim values from flash for temperature compensation and factory offset calibrations
  * @param dev_id of i2c device: from satellite.h
- * @note populates a global struct: struct bmm050_t bmm;
+ * @param bmm: populates a trim struct - refer github Bosch sensortech
  * @return 1 - i2c success
  */
-bool bmxMag_read_trim(dev_id id);
+bool bmxMag_read_trim(dev_id id, struct bmm050_t* bmm);
 
 /*
  * @brief read the bias of the respective magnetometer
  * @param dev_id of i2c device: from satellite.h
  * @param bias_magData: address of temp array
+ * @param bmm: populated struct from read trim
  * @note populates a bias array
  * @return 1 - i2c success
  */
-bool bmxMag_get_bias(dev_id id, int16_t bias_magData[3]);
+bool bmxMag_get_bias(dev_id id, int16_t mag_bias[3], struct bmm050_t bmm);
 
 /*
  * @brief read the compensated/caliberated values from respective magnetometer
  * @param dev_id of i2c device: from satellite.h
  * @param bias_magData: input variable - bias from bmxMag_get_bias
+ * @param bmm: populated trim data - refer Bosch sensortec
  * @note populates an array comp_magData - output
  * @return 1 - i2c success
  */
-bool bmxMag_read_calib_data(dev_id id, int16_t comp_magData[3], int16_t bias_magData[3]);
+bool bmxMag_read_calib_data(dev_id id, int16_t comp_magData[3], int16_t bias_magData[3], struct bmm050_t bmm);
 
 #endif
