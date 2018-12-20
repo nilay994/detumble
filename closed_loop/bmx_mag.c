@@ -54,7 +54,7 @@
 #define BMX_MAG 0x11
 */
 
-#define DBG
+//#define DBG
 
 /* Driver handle shared between the task and the callback function, JTAG bus */
 extern UART_Handle uart_dbg_bus;

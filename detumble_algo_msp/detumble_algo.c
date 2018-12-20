@@ -4,12 +4,14 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "satellite.h"
+#include "parameters.h"
 
 signed char T1[3][3] = {1, 0, 0, 0, 1, 0, 0, 0, -1};
 signed char T2[3][3] = {1, 0, 0, 0, 1, 0, 0, 0, -1};
 vector_t b1_bias = {0,0,0};
 vector_t b2_bias = {0,0,0};
-typedef unsigned char bool;
+//typedef unsigned char bool;
 
 int sign_fn(double a)
 {
@@ -84,7 +86,7 @@ void step4_bdotCalc(vector_t b_cur, vector_t b_cur_norm, vector_t b_prev, vector
 }
 
 
-double alpha = 0.01; 
+//double alpha = 0.01;
 /*
  * Description: performs step5 of the detumbling algorithm - tumble parameter update
  * input: alpha, p_tumb, b_dot
@@ -97,6 +99,12 @@ vector_t step5_tumbleParam(vector_t b_dot_norm)
 	// TODO: verify on MSP432: check if it works, the static implemenation
 	static vector_t p_tumb = {2,2,2};
 	static bool first_call = true;
+
+	float alpha;
+	uint8_t buf[4];
+	uint16_t size;
+	get_parameter(ADCS_alpha1_param_id, (void*) &alpha, buf, &size);
+
 
 	// if (b_dot_old.x != b_dot_norm.x || b_dot_old.y != b_dot_norm.y || b_dot_old.z != b_dot_norm.z) {
 	p_tumb.x = alpha* fabs(b_dot_norm.x) + (1-alpha)*p_tumb.x;
